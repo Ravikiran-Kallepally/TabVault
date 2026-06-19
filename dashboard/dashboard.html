@@ -12,10 +12,13 @@
     <!-- ── Sidebar ── -->
     <aside class="sidebar">
       <div class="brand">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-          <rect x="3" y="3" width="18" height="18" rx="4" fill="#1A73E8" opacity="0.15"/>
-          <rect x="3" y="3" width="18" height="18" rx="4" stroke="#1A73E8" stroke-width="1.5"/>
-          <path d="M8 12h8M8 8h5M8 16h6" stroke="#1A73E8" stroke-width="1.5" stroke-linecap="round"/>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <rect x="7" y="8" width="14" height="11" rx="3" fill="#1A73E8" opacity="0.2"/>
+          <rect x="4" y="5" width="14" height="11" rx="3" fill="#1A73E8" opacity="0.5"/>
+          <rect x="1" y="2" width="14" height="11" rx="3" fill="#1A73E8"/>
+          <path d="M3.5 5.5h5.5" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+          <path d="M3.5 8h8" stroke="white" stroke-width="1.1" stroke-linecap="round" opacity="0.65"/>
+          <path d="M3.5 10.5h5" stroke="white" stroke-width="1.1" stroke-linecap="round" opacity="0.4"/>
         </svg>
         <span>TabVault</span>
       </div>
@@ -79,20 +82,6 @@
           <button class="sidebar-btn-sm" id="importOneTabSubmit">Import Sessions</button>
         </div>
 
-        <!-- AI Settings -->
-        <div class="ai-settings">
-          <div class="ai-settings-hdr">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-            AI Features
-          </div>
-          <input type="password" id="apiKeyInput" class="api-key-input" placeholder="sk-ant-api03-…" autocomplete="off" />
-          <div class="ai-settings-row">
-            <button class="sidebar-btn-sm" id="saveApiKey">Save Key</button>
-            <button class="sidebar-btn-sm danger" id="clearApiKey">Clear</button>
-          </div>
-          <p class="ai-settings-note">Powers AI naming &amp; Smart Group. Get a key at <span class="link-hint">console.anthropic.com</span></p>
-          <div class="api-key-status hidden" id="apiKeyStatus"></div>
-        </div>
       </div>
     </aside>
 
@@ -121,9 +110,13 @@
 
       <div class="content" id="content">
         <div class="empty-state" id="emptyState" style="display:none">
-          <svg width="56" height="56" viewBox="0 0 24 24" fill="none">
-            <rect x="3" y="3" width="18" height="18" rx="4" stroke="#1A73E8" stroke-width="1" opacity="0.4"/>
-            <path d="M8 12h8M8 8h5M8 16h6" stroke="#1A73E8" stroke-width="1" stroke-linecap="round" opacity="0.4"/>
+          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" opacity="0.4">
+            <rect x="7" y="8" width="14" height="11" rx="3" fill="#1A73E8" opacity="0.2"/>
+            <rect x="4" y="5" width="14" height="11" rx="3" fill="#1A73E8" opacity="0.5"/>
+            <rect x="1" y="2" width="14" height="11" rx="3" fill="#1A73E8"/>
+            <path d="M3.5 5.5h5.5" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+            <path d="M3.5 8h8" stroke="white" stroke-width="1.1" stroke-linecap="round" opacity="0.65"/>
+            <path d="M3.5 10.5h5" stroke="white" stroke-width="1.1" stroke-linecap="round" opacity="0.4"/>
           </svg>
           <h3 id="emptyTitle">No sessions yet</h3>
           <p id="emptyMsg">Open the extension popup and save your first session.</p>
@@ -135,9 +128,13 @@
     <!-- ── Detail panel ── -->
     <aside class="detail-panel" id="detailPanel">
       <div class="detail-empty" id="detailEmpty">
-        <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
-          <path d="M9 12h6M9 8h4M9 16h5" stroke="#4a4f6a" stroke-width="1.5" stroke-linecap="round"/>
-          <rect x="3" y="3" width="18" height="18" rx="4" stroke="#4a4f6a" stroke-width="1.2"/>
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" opacity="0.3">
+          <rect x="7" y="8" width="14" height="11" rx="3" fill="#1A73E8" opacity="0.2"/>
+          <rect x="4" y="5" width="14" height="11" rx="3" fill="#1A73E8" opacity="0.5"/>
+          <rect x="1" y="2" width="14" height="11" rx="3" fill="#1A73E8"/>
+          <path d="M3.5 5.5h5.5" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+          <path d="M3.5 8h8" stroke="white" stroke-width="1.1" stroke-linecap="round" opacity="0.65"/>
+          <path d="M3.5 10.5h5" stroke="white" stroke-width="1.1" stroke-linecap="round" opacity="0.4"/>
         </svg>
         <p>Select a session<br/>to preview its tabs</p>
       </div>

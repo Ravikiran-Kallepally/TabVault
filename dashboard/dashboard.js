@@ -2,7 +2,6 @@ import {
   getSessions, createSession, duplicateSession, deleteSession, renameSession, pinSession,
   exportSessions, importSessions,
   updateNotes, setSessionTags, getTags, upsertTag, removeTagGlobal,
-  getApiKey, setApiKey
 } from '../utils/storage.js';
 import { timeAgo, getDomain, getFavLetter, domainColor, truncate, isValidUrl, escapeHtml } from '../utils/helpers.js';
 
@@ -26,7 +25,8 @@ const $ = id => document.getElementById(id);
 // ── Theme ─────────────────────────────────────────────────────────────────────
 async function loadTheme() {
   const { tabvault_theme } = await chrome.storage.local.get('tabvault_theme');
-  if (tabvault_theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+  const theme = tabvault_theme ?? 'dark';
+  document.documentElement.setAttribute('data-theme', theme);
 }
 
 async function toggleTheme() {
@@ -46,7 +46,6 @@ async function init() {
   renderTagSidebar();
   render();
   bindEvents();
-  await loadApiKeyStatus();
 }
 
 function updateStats() {
@@ -56,17 +55,6 @@ function updateStats() {
   $('statTabs').textContent     = allSessions.reduce((n, s) => n + s.tabs.length, 0);
   $('statWeek').textContent     = allSessions.filter(s => now - s.createdAt < WEEK).length;
   $('statAI').textContent       = allSessions.filter(s => s.aiNamed).length;
-}
-
-async function loadApiKeyStatus() {
-  const key    = await getApiKey();
-  const status = $('apiKeyStatus');
-  if (key) {
-    $('apiKeyInput').placeholder = '••••••••••••' + key.slice(-4);
-    status.textContent           = '✓ API key saved';
-    status.className             = 'api-key-status ok';
-    status.classList.remove('hidden');
-  }
 }
 
 // ── Tag sidebar ───────────────────────────────────────────────────────────────
@@ -628,26 +616,6 @@ function bindEvents() {
       showToast(`Imported ${count} session${count !== 1 ? 's' : ''}`);
     } catch { showToast('Import failed — invalid file'); }
     e.target.value = '';
-  });
-
-  // API key
-  $('saveApiKey').addEventListener('click', async () => {
-    const val = $('apiKeyInput').value.trim();
-    if (!val) { showToast('Enter a key first'); return; }
-    await setApiKey(val);
-    $('apiKeyInput').value       = '';
-    $('apiKeyInput').placeholder = '••••••••••••' + val.slice(-4);
-    $('apiKeyStatus').textContent = '✓ API key saved';
-    $('apiKeyStatus').className   = 'api-key-status ok';
-    $('apiKeyStatus').classList.remove('hidden');
-    showToast('API key saved');
-  });
-  $('clearApiKey').addEventListener('click', async () => {
-    await setApiKey('');
-    $('apiKeyInput').value       = '';
-    $('apiKeyInput').placeholder = 'sk-ant-api03-…';
-    $('apiKeyStatus').classList.add('hidden');
-    showToast('API key cleared');
   });
 
   // Tab list click → open tab

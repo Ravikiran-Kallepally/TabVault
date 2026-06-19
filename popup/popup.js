@@ -30,7 +30,8 @@ const GC = {
 // ── Theme ─────────────────────────────────────────────────────────────────────
 async function loadTheme() {
   const { tabvault_theme } = await chrome.storage.local.get('tabvault_theme');
-  if (tabvault_theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+  const theme = tabvault_theme ?? 'dark';
+  document.documentElement.setAttribute('data-theme', theme);
 }
 
 async function toggleTheme() {
