@@ -268,21 +268,42 @@ html, body {
   background: var(--surface);
   transition: all 0.12s;
   text-align: center;
+  white-space: nowrap;
 }
 .btn-ghost:hover { background: var(--surface-2); color: var(--text); }
 
+/* Save (keep tabs) — secondary style */
+.btn-save-keep {
+  flex: 1;
+  padding: 6px;
+  border-radius: var(--r-sm);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent-2);
+  border: 1px solid rgba(99,102,241,0.35);
+  background: var(--accent-bg);
+  transition: all 0.12s;
+  text-align: center;
+  white-space: nowrap;
+}
+.btn-save-keep:hover { background: rgba(99,102,241,0.18); border-color: var(--accent); }
+
+/* Save & Close — primary CTA */
 .btn-confirm {
   flex: 2;
   padding: 6px;
   border-radius: var(--r-sm);
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 700;
   color: #fff;
-  background: var(--accent);
-  transition: background 0.12s;
+  background: linear-gradient(135deg, #6366f1 0%, #7c3aed 100%);
+  box-shadow: 0 2px 8px rgba(99,102,241,0.35);
+  transition: all 0.12s;
   text-align: center;
+  white-space: nowrap;
 }
-.btn-confirm:hover { background: #5254cc; }
+.btn-confirm:hover { opacity: 0.9; transform: translateY(-1px); }
+.btn-confirm:active { transform: none; opacity: 1; }
 
 /* ── Recovery banner ─────────────────────────────────────────── */
 .recovery-banner {

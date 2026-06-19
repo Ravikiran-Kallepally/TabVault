@@ -298,9 +298,10 @@ function bindEvents() {
   // Save flow
   $('saveBtn').addEventListener('click', openNameBar);
   $('cancelSave').addEventListener('click', closeNameBar);
-  $('confirmSave').addEventListener('click', doSave);
+  $('confirmSave').addEventListener('click', () => doSave(false));
+  $('confirmSaveClose').addEventListener('click', () => doSave(true));
   $('nameInput').addEventListener('keydown', e => {
-    if (e.key === 'Enter')  doSave();
+    if (e.key === 'Enter')  doSave(false);
     if (e.key === 'Escape') closeNameBar();
   });
 
@@ -428,7 +429,7 @@ function closeNameBar() {
   $('nameInput').placeholder = 'Name this session…';
 }
 
-async function doSave() {
+async function doSave(closeAfter = false) {
   const name    = $('nameInput').value.trim();
   const aiNamed = !$('aiBadge').classList.contains('hidden') && name.length > 0;
   const tabs    = await chrome.tabs.query({ currentWindow: true });
@@ -437,7 +438,17 @@ async function doSave() {
 
   const { tabsWithGroups, groups } = await captureTabGroups(saveable);
   const session = await createSession(name, tabsWithGroups, aiNamed, groups);
-  allSessions   = await getSessions();
+
+  if (closeAfter) {
+    // Close all non-pinned tabs — pinned tabs are intentionally left open
+    const tabIds = saveable.filter(t => !t.pinned).map(t => t.id);
+    if (tabIds.length) await chrome.tabs.remove(tabIds);
+    // Toast shown before close (window may close before it renders)
+    showToast(`Saved & closed ${tabIds.length} tab${tabIds.length !== 1 ? 's' : ''}`);
+    return;
+  }
+
+  allSessions = await getSessions();
   closeNameBar(); render();
   showToast(`Saved "${session.name}" · ${session.tabs.length} tabs`);
 }
