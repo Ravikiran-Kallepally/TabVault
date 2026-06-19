@@ -54,7 +54,7 @@ function updateStats() {
   $('statSessions').textContent = allSessions.length;
   $('statTabs').textContent     = allSessions.reduce((n, s) => n + s.tabs.length, 0);
   $('statWeek').textContent     = allSessions.filter(s => now - s.createdAt < WEEK).length;
-  $('statAI').textContent       = allSessions.filter(s => s.aiNamed).length;
+  $('statPinned').textContent   = allSessions.filter(s => s.pinned).length;
 }
 
 // ── Tag sidebar ───────────────────────────────────────────────────────────────
@@ -65,7 +65,7 @@ function renderTagSidebar() {
 
   list.innerHTML = names.map(name => {
     const color = allTags[name];
-    return `<div class="sidebar-tag ${activeTag === name ? 'active' : ''}" data-tag="${escapeHtml(name)}" style="--tc:${color}">
+    return `<div class="sidebar-tag ${activeTag === name ? 'active' : ''}" data-tag="${escapeHtml(name)}" style="--tc:${color}" draggable="true" title="Drag to a session card to tag it">
       <span class="sidebar-tag-dot"></span>
       <span class="sidebar-tag-name">${escapeHtml(name)}</span>
       <button class="sidebar-tag-del" data-tag="${escapeHtml(name)}" title="Delete tag">×</button>
@@ -156,7 +156,7 @@ function cardHTML(s) {
 
   const aiDot = s.aiNamed ? `<span class="card-ai-dot" title="AI-named">✨</span>` : '';
 
-  return `<div class="session-card ${s.pinned ? 'pinned' : ''} ${selectedId === s.id ? 'selected' : ''}" data-id="${s.id}" style="--sc:${sc}">
+  return `<div class="session-card ${s.pinned ? 'pinned' : ''} ${selectedId === s.id ? 'selected' : ''}" data-id="${s.id}" style="--sc:${sc}" draggable="true">
     <div class="card-favicons">${favsHTML}</div>
     <div class="card-name" title="${escapeHtml(s.name)}">${escapeHtml(truncate(s.name, 32))}${aiDot}</div>
     <div class="card-meta">
@@ -521,6 +521,88 @@ function bindEvents() {
     if (card) showDetail(card.dataset.id);
   });
 
+  // ── Close detail panel ───────────────────────────────────────
+  function closeDetail() {
+    selectedId = null; selectedWinId = null;
+    $('detailContent').classList.add('hidden');
+    $('windowDetailContent').classList.add('hidden');
+    $('detailEmpty').style.display = 'flex';
+    render();
+  }
+  $('closeDetailBtn').addEventListener('click', closeDetail);
+  $('closeWinDetailBtn').addEventListener('click', closeDetail);
+
+  // ── Drag tags → session cards ─────────────────────────────
+  $('tagList').addEventListener('dragstart', e => {
+    const tag = e.target.closest('.sidebar-tag[draggable]');
+    if (!tag) return;
+    e.dataTransfer.setData('text/tabvault-tag', tag.dataset.tag);
+    e.dataTransfer.effectAllowed = 'copy';
+  });
+
+  const grid = $('sessionGrid');
+  grid.addEventListener('dragover', e => {
+    if (!e.dataTransfer.types.includes('text/tabvault-tag')) return;
+    const card = e.target.closest('.session-card:not(.window-card)');
+    if (!card) return;
+    e.preventDefault();
+    grid.querySelectorAll('.drag-over').forEach(c => c.classList.remove('drag-over'));
+    card.classList.add('drag-over');
+  });
+  grid.addEventListener('dragleave', e => {
+    if (!e.relatedTarget?.closest?.('.session-card')) {
+      grid.querySelectorAll('.drag-over').forEach(c => c.classList.remove('drag-over'));
+    }
+  });
+  grid.addEventListener('drop', async e => {
+    grid.querySelectorAll('.drag-over').forEach(c => c.classList.remove('drag-over'));
+    if (!e.dataTransfer.types.includes('text/tabvault-tag')) return;
+    const card = e.target.closest('.session-card:not(.window-card)');
+    if (!card) return;
+    e.preventDefault();
+    const tagName = e.dataTransfer.getData('text/tabvault-tag');
+    if (!tagName || !allTags[tagName]) return;
+    const s = allSessions.find(s => s.id === card.dataset.id);
+    if (!s) return;
+    const next = [...new Set([...(s.tags || []), tagName])];
+    await setSessionTags(s.id, next);
+    allSessions = await getSessions();
+    updateStats(); render();
+    if (selectedId === s.id) renderDetailTags(allSessions.find(x => x.id === s.id));
+    showToast(`"${tagName}" → "${truncate(s.name, 22)}"`);
+  });
+
+  // ── Drag session cards → detail panel ────────────────────
+  grid.addEventListener('dragstart', e => {
+    const card = e.target.closest('.session-card:not(.window-card)');
+    if (!card || e.target.closest('[data-action]') || e.target.closest('.card-tag')) return;
+    if (e.dataTransfer.types.includes('text/tabvault-tag')) return; // tag drag takes priority
+    e.dataTransfer.setData('text/tabvault-session', card.dataset.id);
+    e.dataTransfer.effectAllowed = 'link';
+    requestAnimationFrame(() => card.classList.add('dragging'));
+  });
+  grid.addEventListener('dragend', e => {
+    const card = e.target.closest('.session-card');
+    if (card) card.classList.remove('dragging');
+  });
+
+  const panel = $('detailPanel');
+  panel.addEventListener('dragover', e => {
+    if (!e.dataTransfer.types.includes('text/tabvault-session')) return;
+    e.preventDefault();
+    panel.classList.add('drop-target');
+  });
+  panel.addEventListener('dragleave', e => {
+    if (!e.relatedTarget?.closest?.('#detailPanel')) panel.classList.remove('drop-target');
+  });
+  panel.addEventListener('drop', e => {
+    panel.classList.remove('drop-target');
+    if (!e.dataTransfer.types.includes('text/tabvault-session')) return;
+    e.preventDefault();
+    const id = e.dataTransfer.getData('text/tabvault-session');
+    if (id) showDetail(id);
+  });
+
   // Notes autosave
   $('sessionNotes').addEventListener('input', e => {
     clearTimeout(notesTimer);
@@ -627,6 +709,9 @@ function bindEvents() {
   // Live auto-refresh when popup or service worker mutates storage
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area !== 'local') return;
+    if (changes.tabvault_theme) {
+      document.documentElement.setAttribute('data-theme', changes.tabvault_theme.newValue ?? 'dark');
+    }
     if (changes.tabvault_sessions) {
       allSessions = changes.tabvault_sessions.newValue || [];
       updateStats();

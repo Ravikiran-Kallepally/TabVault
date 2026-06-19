@@ -28,7 +28,7 @@
         <div class="stat"><span id="statSessions">0</span><small>sessions</small></div>
         <div class="stat"><span id="statTabs">0</span><small>tabs</small></div>
         <div class="stat"><span id="statWeek">0</span><small>this week</small></div>
-        <div class="stat"><span id="statAI">0</span><small>AI-named</small></div>
+        <div class="stat"><span id="statPinned">0</span><small>pinned</small></div>
       </div>
 
       <!-- Filter nav -->
@@ -147,6 +147,9 @@
             <button class="detail-icon-btn" id="shareBtn" title="Share session">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
             </button>
+            <button class="detail-icon-btn" id="closeDetailBtn" title="Close panel">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
           </div>
           <div class="detail-meta" id="detailMeta"></div>
           <!-- Tab group chips -->
@@ -171,7 +174,12 @@
       <!-- Live window detail -->
       <div class="detail-content hidden" id="windowDetailContent">
         <div class="detail-header">
-          <div class="detail-title" id="windowDetailTitle">Window</div>
+          <div class="detail-title-row">
+            <div class="detail-title" id="windowDetailTitle">Window</div>
+            <button class="detail-icon-btn" id="closeWinDetailBtn" title="Close panel">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
           <div class="detail-meta" id="windowDetailMeta"></div>
           <button class="detail-restore" id="saveWindowBtn">Save as Session</button>
         </div>

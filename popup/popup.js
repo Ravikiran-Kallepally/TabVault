@@ -341,6 +341,7 @@ function bindEvents() {
   // Session list — delegation
   const list = $('sessionsList');
   list.addEventListener('click', e => {
+    if (e.target.classList.contains('rename-input')) return; // editing in place — don't restore
     const fav = e.target.closest('.fav');
     if (fav?.dataset.url) {
       e.stopPropagation();
@@ -354,6 +355,7 @@ function bindEvents() {
   });
 
   list.addEventListener('keydown', e => {
+    if (e.target.classList.contains('rename-input')) return; // let rename handle its own keys
     const item = e.target.closest('.session-item');
     if (!item) return;
     if (e.key === 'Enter')     { handleAction('restore-new', item.dataset.id, item); return; }
