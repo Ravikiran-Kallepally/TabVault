@@ -1,23 +1,23 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  /* Apple HIG dark mode */
-  --bg:        #1C1C1E;
-  --surface:   #2C2C2E;
-  --surface-2: #3A3A3C;
-  --surface-3: #48484A;
-  --border:    rgba(84,84,88,0.65);
-  --border-2:  rgba(84,84,88,0.9);
-  --accent:    #0A84FF;
-  --accent-2:  #409CFF;
-  --accent-bg: rgba(10,132,255,0.12);
-  --accent-glow: rgba(10,132,255,0.2);
-  --text:      #FFFFFF;
-  --text-2:    rgba(235,235,245,0.6);
-  --text-3:    rgba(235,235,245,0.3);
-  --green:     #30D158;
-  --red:       #FF453A;
-  --yellow:    #FFD60A;
+  /* Deep midnight — Linear/Vercel dark */
+  --bg:        #0D0D12;
+  --surface:   #141419;
+  --surface-2: #1C1C24;
+  --surface-3: #242430;
+  --border:    rgba(255,255,255,0.07);
+  --border-2:  rgba(255,255,255,0.13);
+  --accent:    #2563EB;
+  --accent-2:  #60A5FA;
+  --accent-bg: rgba(37,99,235,0.1);
+  --accent-glow: rgba(37,99,235,0.18);
+  --text:      #F0F0F5;
+  --text-2:    #888899;
+  --text-3:    #44445A;
+  --green:     #22C55E;
+  --red:       #EF4444;
+  --yellow:    #EAB308;
   --r:         10px;
   --r-sm:      8px;
   --sidebar-w: 240px;
@@ -28,7 +28,7 @@ html, body {
   height: 100%;
   background: var(--bg);
   color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', 'Segoe UI', sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
   font-size: 13px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
@@ -465,7 +465,7 @@ html, body {
 }
 .session-card:hover { background: var(--surface-2); }
 .session-card:hover::before { background: var(--sc, var(--accent)); opacity: 0.7; }
-.session-card.selected { background: var(--surface-2); border-color: rgba(10,132,255,0.4); }
+.session-card.selected { background: var(--surface-2); border-color: rgba(37,99,235,0.4); }
 .session-card.selected::before { background: var(--sc, var(--accent)); opacity: 1; }
 .session-card.pinned::before   { background: var(--sc, var(--accent)); opacity: 1; }
 
@@ -533,7 +533,7 @@ html, body {
   transition: background 0.12s, color 0.12s, border-color 0.12s;
   text-align: center;
 }
-.card-btn:hover { background: var(--accent-bg); color: var(--accent-2); border-color: rgba(99,102,241,0.3); }
+.card-btn:hover { background: var(--accent-bg); color: var(--accent-2); border-color: rgba(37,99,235,0.3); }
 .card-btn.del:hover { background: rgba(239,68,68,0.1); color: var(--red); border-color: rgba(239,68,68,0.3); }
 
 /* Live window cards */
@@ -726,12 +726,12 @@ html, body {
   font-size: 11.5px;
   font-weight: 700;
   background: var(--accent-bg);
-  border: 1px solid rgba(99,102,241,0.3);
+  border: 1px solid rgba(37,99,235,0.3);
   color: var(--accent-2);
   cursor: pointer;
   transition: background 0.12s;
 }
-.share-copy-btn:hover { background: rgba(99,102,241,0.2); }
+.share-copy-btn:hover { background: rgba(37,99,235,0.2); }
 
 /* Tab list */
 .tabs-list { flex: 1; overflow-y: auto; padding: 8px; }
@@ -801,8 +801,8 @@ html, body {
   left: 50%;
   transform: translateX(-50%) translateY(14px);
   opacity: 0;
-  background: #3A3A3C;
-  border: 0.5px solid rgba(255,255,255,0.12);
+  background: var(--surface-2);
+  border: 1px solid var(--border-2);
   border-radius: var(--r-sm);
   padding: 10px 16px;
   display: flex;
@@ -810,7 +810,7 @@ html, body {
   gap: 12px;
   font-size: 13px;
   font-weight: 500;
-  box-shadow: 0 8px 28px rgba(0,0,0,0.6);
+  box-shadow: 0 8px 28px rgba(0,0,0,0.7);
   pointer-events: none;
   transition: opacity 0.2s, transform 0.2s;
   z-index: 999;
@@ -824,8 +824,8 @@ html, body {
   font-weight: 700;
   background: var(--accent-bg);
   color: var(--accent-2);
-  border: 1px solid rgba(99,102,241,0.3);
+  border: 1px solid rgba(37,99,235,0.3);
   transition: background 0.12s;
 }
-.toast-undo:hover { background: rgba(99,102,241,0.25); }
+.toast-undo:hover { background: rgba(37,99,235,0.2); }
 .toast-undo.hidden { display: none; }
