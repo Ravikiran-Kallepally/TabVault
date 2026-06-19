@@ -23,8 +23,24 @@ let notesTimer    = null;
 
 const $ = id => document.getElementById(id);
 
+// ── Theme ─────────────────────────────────────────────────────────────────────
+async function loadTheme() {
+  const { tabvault_theme } = await chrome.storage.local.get('tabvault_theme');
+  if (tabvault_theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+}
+
+async function toggleTheme() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const next   = isDark ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  await chrome.storage.local.set({ tabvault_theme: next });
+}
+
 // ── Init ──────────────────────────────────────────────────────────────────────
 async function init() {
+  await loadTheme();
+  $('themeToggle').addEventListener('click', toggleTheme);
+
   [allSessions, allTags] = await Promise.all([getSessions(), getTags()]);
   updateStats();
   renderTagSidebar();

@@ -27,8 +27,24 @@ const GC = {
   green:'#34a853', pink:'#e91e8c', purple:'#9c27b0', cyan:'#00bcd4', orange:'#f57c00'
 };
 
+// ── Theme ─────────────────────────────────────────────────────────────────────
+async function loadTheme() {
+  const { tabvault_theme } = await chrome.storage.local.get('tabvault_theme');
+  if (tabvault_theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+}
+
+async function toggleTheme() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const next   = isDark ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  await chrome.storage.local.set({ tabvault_theme: next });
+}
+
 // ── Boot ──────────────────────────────────────────────────────────────────────
 async function init() {
+  await loadTheme();
+  $('themeToggle').addEventListener('click', toggleTheme);
+
   if (!(await hasOnboarded())) { showOnboarding(); return; }
   await loadAll();
   await checkRecovery();
