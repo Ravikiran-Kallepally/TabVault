@@ -164,10 +164,13 @@ function renderTagFilter() {
 }
 
 function sessionHTML(s, matchCount, query) {
-  const MAX_FAVS   = 6;
-  const favSlice   = s.tabs.slice(0, MAX_FAVS);
-  const overflow   = s.tabs.length - MAX_FAVS;
-  const favsHTML   = favSlice.map(t => {
+  // Primary color from first tab — gives each session a unique identity
+  const sc = s.tabs.length ? domainColor(s.tabs[0].url) : '#6366f1';
+
+  // Favicon strip: fixed 5, no wrapping, fade-right handled in CSS
+  const favSlice = s.tabs.slice(0, 5);
+  const overflow = s.tabs.length - 5;
+  const favsHTML = favSlice.map(t => {
     const color  = domainColor(t.url);
     const letter = getFavLetter(t.url);
     if (t.favIconUrl && t.favIconUrl.startsWith('http')) {
@@ -177,38 +180,44 @@ function sessionHTML(s, matchCount, query) {
     return `<div class="fav" data-url="${escapeHtml(t.url)}" title="${escapeHtml(t.title)}" style="background:${color}">${letter}</div>`;
   }).join('') + (overflow > 0 ? `<div class="fav-more">+${overflow}</div>` : '');
 
-  const matchHTML = (matchCount && query)
-    ? `<div class="match-badge">${matchCount} tab${matchCount > 1 ? 's' : ''} matched</div>` : '';
+  const aiDot    = s.aiNamed ? `<span class="ai-dot" title="AI-named">✦</span>` : '';
+  const pinnedDot = s.pinned ? `<span class="pin-indicator" title="Pinned">📌</span>` : '';
 
   const tagsHTML = (s.tags || []).length
-    ? `<div class="session-tags">${(s.tags).slice(0, 3).map(tag => {
+    ? (s.tags).slice(0, 3).map(tag => {
         const c = allTags[tag] || '#6366f1';
         return `<span class="tag-chip" style="--tc:${c}">${escapeHtml(tag)}</span>`;
-      }).join('')}${s.tags.length > 3 ? `<span class="tag-chip tag-more">+${s.tags.length - 3}</span>` : ''}</div>` : '';
+      }).join('') + (s.tags.length > 3 ? `<span class="tag-chip tag-more">+${s.tags.length - 3}</span>` : '')
+    : '';
 
   const groups = s.groups || [];
-  const groupDotsHTML = groups.length
-    ? `<div class="group-dots">${groups.slice(0, 5).map(g =>
+  const groupsHTML = groups.length
+    ? groups.slice(0, 4).map(g =>
         `<span class="group-dot" style="background:${GC[g.color] || '#888'}" title="${escapeHtml(g.title)}"></span>`
-      ).join('')}${groups.length > 1 && groups[0]?.title ? `<span class="group-dot-label">${escapeHtml(groups[0].title)}${groups.length > 1 ? ` +${groups.length - 1}` : ''}</span>` : ''}</div>` : '';
+      ).join('')
+    : '';
 
-  const aiDot = s.aiNamed ? `<span class="ai-dot" title="AI-named">✦</span>` : '';
+  const matchBadge = (matchCount && query)
+    ? `<span class="match-badge">${matchCount} matched</span>` : '';
 
-  return `<div class="session-item ${s.pinned ? 'pinned' : ''}" data-id="${s.id}" tabindex="0">
-    <div class="favicons">${favsHTML}</div>
-    <div class="session-info">
-      <div class="session-name">${highlight(truncate(s.name, 34), query)}${aiDot}</div>
-      <div class="session-meta">
-        <span>${s.tabs.length} tab${s.tabs.length !== 1 ? 's' : ''}</span>
+  return `<div class="session-item ${s.pinned ? 'pinned' : ''}" data-id="${s.id}" tabindex="0" style="--sc:${sc}">
+    <div class="item-top">
+      <span class="session-name">${highlight(truncate(s.name, 36), query)}${aiDot}${pinnedDot}</span>
+      <div class="session-actions">
+        <button class="action-btn restore" data-id="${s.id}" data-action="restore-new" title="Open">↗</button>
+        <button class="action-btn" data-id="${s.id}" data-action="tag" title="Tags">🏷</button>
+        <button class="action-btn" data-id="${s.id}" data-action="menu" title="More">⋯</button>
+      </div>
+    </div>
+    <div class="item-bottom">
+      <div class="favicons">${favsHTML}</div>
+      <div class="item-meta">
+        <span class="meta-count">${s.tabs.length} tab${s.tabs.length !== 1 ? 's' : ''}</span>
         <span class="dot">·</span>
         <span>${timeAgo(s.createdAt)}</span>
+        ${groupsHTML}${matchBadge}
       </div>
-      ${matchHTML}${groupDotsHTML}${tagsHTML}
-    </div>
-    <div class="session-actions">
-      <button class="action-btn restore" data-id="${s.id}" data-action="restore-new" title="Open in new window">↗</button>
-      <button class="action-btn" data-id="${s.id}" data-action="tag" title="Tags">🏷</button>
-      <button class="action-btn" data-id="${s.id}" data-action="menu" title="More">⋯</button>
+      ${tagsHTML ? `<div class="session-tags">${tagsHTML}</div>` : ''}
     </div>
   </div>`;
 }
@@ -374,6 +383,20 @@ function bindEvents() {
   $('closeGroupOverlay').addEventListener('click', closeGroupOverlay);
   $('cancelGroupSave').addEventListener('click', closeGroupOverlay);
   $('confirmGroupSave').addEventListener('click', saveAllGroups);
+
+  // Live auto-refresh when another context (background, dashboard) mutates storage
+  chrome.storage.onChanged.addListener((changes, area) => {
+    if (area !== 'local') return;
+    if (changes.tabvault_sessions) {
+      allSessions = changes.tabvault_sessions.newValue || [];
+      render();
+    }
+    if (changes.tabvault_tags) {
+      allTags = changes.tabvault_tags.newValue || {};
+      renderTagFilter();
+      render();
+    }
+  });
 }
 
 // ── Name bar / AI naming ──────────────────────────────────────────────────────

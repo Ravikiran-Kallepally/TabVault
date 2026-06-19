@@ -456,28 +456,43 @@ html, body {
   gap: 7px;
   overflow: hidden;
 }
+/* Domain-color top bar — unique identity per session */
+.session-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2.5px;
+  background: var(--sc, var(--accent));
+  opacity: 0.35;
+  border-radius: 10px 10px 0 0;
+  transition: opacity 0.15s;
+  pointer-events: none;
+}
+.session-card:hover::before,
+.session-card.selected::before { opacity: 0.8; }
+.session-card.pinned::before   { opacity: 1; }
+
 .session-card::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(99,102,241,0.04) 0%, transparent 60%);
+  background: linear-gradient(135deg, rgba(99,102,241,0.03) 0%, transparent 60%);
   opacity: 0;
   transition: opacity 0.2s;
   pointer-events: none;
   border-radius: inherit;
 }
 .session-card:hover {
-  border-color: rgba(99,102,241,0.35);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.35), 0 0 0 1px rgba(99,102,241,0.12);
+  border-color: color-mix(in srgb, var(--sc, var(--accent)) 40%, transparent);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.35);
   transform: translateY(-1px);
 }
 .session-card:hover::after { opacity: 1; }
 .session-card.selected {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px rgba(99,102,241,0.2);
+  border-color: color-mix(in srgb, var(--sc, var(--accent)) 60%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--sc, var(--accent)) 20%, transparent);
 }
 .session-card.pinned {
-  border-top: 2px solid var(--accent);
   padding-top: 13px;
 }
 

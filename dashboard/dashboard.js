@@ -133,7 +133,8 @@ function render() {
 }
 
 function cardHTML(s) {
-  const preview  = s.tabs.slice(0, 8);
+  const sc      = s.tabs.length ? domainColor(s.tabs[0].url) : '#6366f1';
+  const preview = s.tabs.slice(0, 8);
   const favsHTML = preview.map(t => {
     const color  = domainColor(t.url);
     const letter = getFavLetter(t.url);
@@ -151,7 +152,7 @@ function cardHTML(s) {
 
   const aiDot = s.aiNamed ? `<span class="card-ai-dot" title="AI-named">✨</span>` : '';
 
-  return `<div class="session-card ${s.pinned ? 'pinned' : ''} ${selectedId === s.id ? 'selected' : ''}" data-id="${s.id}">
+  return `<div class="session-card ${s.pinned ? 'pinned' : ''} ${selectedId === s.id ? 'selected' : ''}" data-id="${s.id}" style="--sc:${sc}">
     <div class="card-favicons">${favsHTML}</div>
     <div class="card-name" title="${escapeHtml(s.name)}">${escapeHtml(truncate(s.name, 32))}${aiDot}</div>
     <div class="card-meta">
@@ -637,6 +638,22 @@ function bindEvents() {
   $('tabsList').addEventListener('click', e => {
     const item = e.target.closest('.tab-item');
     if (item?.dataset.url) chrome.tabs.create({ url: item.dataset.url });
+  });
+
+  // Live auto-refresh when popup or service worker mutates storage
+  chrome.storage.onChanged.addListener((changes, area) => {
+    if (area !== 'local') return;
+    if (changes.tabvault_sessions) {
+      allSessions = changes.tabvault_sessions.newValue || [];
+      updateStats();
+      renderTagSidebar();
+      render();
+    }
+    if (changes.tabvault_tags) {
+      allTags = changes.tabvault_tags.newValue || {};
+      renderTagSidebar();
+      render();
+    }
   });
 }
 
