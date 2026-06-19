@@ -9,6 +9,7 @@
 <body>
   <div class="app">
 
+    <!-- ── Header ── -->
     <header class="header">
       <div class="logo">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
@@ -26,6 +27,7 @@
       </button>
     </header>
 
+    <!-- ── Search ── -->
     <div class="search-wrap">
       <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
         <circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/>
@@ -34,6 +36,7 @@
       <button class="clear-btn hidden" id="clearSearch">✕</button>
     </div>
 
+    <!-- ── Save bar ── -->
     <div class="save-bar" id="saveBar">
       <div class="tab-count-info">
         <span id="currentTabCount" class="tab-count-badge">—</span>
@@ -41,7 +44,7 @@
       </div>
       <div class="save-actions">
         <button class="btn-ai-group" id="smartGroupBtn" title="AI: Smart Group &amp; Save">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
           Group
         </button>
         <button class="btn-save" id="saveBtn">
@@ -54,6 +57,7 @@
       </div>
     </div>
 
+    <!-- ── Name bar (with AI) ── -->
     <div class="name-bar hidden" id="nameBar">
       <div class="name-input-wrap">
         <input id="nameInput" class="name-input" type="text" placeholder="Name this session…" maxlength="60" />
@@ -65,11 +69,31 @@
       </div>
     </div>
 
+    <!-- ── Recovery banner ── -->
+    <div class="recovery-banner hidden" id="recoveryBanner">
+      <div class="rb-left">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+        <div class="rb-text">
+          <span class="rb-title">Session recovered</span>
+          <span class="rb-sub" id="recoverySub"></span>
+        </div>
+      </div>
+      <div class="rb-right">
+        <button class="rb-btn" id="recoveryRestore">Restore</button>
+        <button class="rb-x" id="recoveryClose">✕</button>
+      </div>
+    </div>
+
+    <!-- ── Sessions header + tag filter ── -->
     <div class="sessions-header">
       <span class="sessions-label">Sessions</span>
       <span class="sessions-count" id="sessionsCount">0</span>
     </div>
+    <div class="tag-filter-row hidden" id="tagFilterRow"></div>
 
+    <!-- ── Sessions list ── -->
     <div class="sessions-list" id="sessionsList">
       <div class="empty-state" id="emptyState">
         <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
@@ -81,6 +105,7 @@
       </div>
     </div>
 
+    <!-- ── Context menu ── -->
     <div class="context-menu hidden" id="contextMenu">
       <button class="menu-item" data-action="restore-new">Open in new window</button>
       <button class="menu-item" data-action="restore-here">Add to this window</button>
@@ -91,7 +116,13 @@
       <button class="menu-item danger" data-action="delete">Delete</button>
     </div>
 
-    <!-- AI Smart Group overlay -->
+    <!-- ── Tag popover ── -->
+    <div class="tag-popover hidden" id="tagPopover">
+      <div class="tag-pop-list" id="tagPopList"></div>
+      <input class="tag-pop-input" id="tagPopInput" placeholder="New tag…" maxlength="24" />
+    </div>
+
+    <!-- ── AI Smart Group overlay ── -->
     <div class="group-overlay hidden" id="groupOverlay">
       <div class="group-hdr">
         <span>Smart Group &amp; Save</span>
@@ -108,9 +139,55 @@
       </div>
     </div>
 
-  </div>
+    <!-- ── Onboarding overlay ── -->
+    <div class="onboarding hidden" id="onboarding">
+      <div class="ob-wrap">
 
-  <!-- Static toast with undo support -->
+        <div class="ob-step" id="obStep0">
+          <div class="ob-icon">
+            <svg width="56" height="56" viewBox="0 0 24 24" fill="none">
+              <rect x="2" y="2" width="20" height="20" rx="5" fill="#6366f1" opacity="0.2"/>
+              <rect x="2" y="2" width="20" height="20" rx="5" stroke="#6366f1" stroke-width="1.5"/>
+              <path d="M7 12h10M7 8h6M7 16h8" stroke="#6366f1" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <h2>Welcome to TabVault</h2>
+          <p>Your browser sessions are finally safe. Save, search and restore — no account, nothing leaves your browser.</p>
+        </div>
+
+        <div class="ob-step hidden" id="obStep1">
+          <div class="ob-icon ob-icon-lg">✨</div>
+          <h2>AI names your sessions</h2>
+          <p>Click Save and Claude instantly suggests a meaningful name like <em>"Work: React Research"</em> instead of a timestamp.</p>
+        </div>
+
+        <div class="ob-step hidden" id="obStep2">
+          <div class="ob-icon ob-icon-lg">🛡️</div>
+          <h2>Auto-saved every 30 min</h2>
+          <p>TabVault silently protects your tabs in the background. Crashes, restarts, accidents — nothing is ever lost.</p>
+        </div>
+
+        <div class="ob-step hidden" id="obStep3">
+          <div class="ob-icon ob-icon-lg">⌨️</div>
+          <h2>Save without even opening this</h2>
+          <p>Press <kbd>Ctrl+Shift+S</kbd> anywhere to save your session silently. Or right-click any page for quick save.</p>
+        </div>
+
+      </div>
+      <div class="ob-footer">
+        <div class="ob-dots" id="obDots">
+          <span class="ob-dot active" data-step="0"></span>
+          <span class="ob-dot" data-step="1"></span>
+          <span class="ob-dot" data-step="2"></span>
+          <span class="ob-dot" data-step="3"></span>
+        </div>
+        <button class="btn-confirm ob-next" id="obNext">Next</button>
+      </div>
+    </div>
+
+  </div><!-- /.app -->
+
+  <!-- Static toast with undo -->
   <div class="toast" id="toastEl">
     <span class="toast-msg" id="toastMsg"></span>
     <button class="toast-undo hidden" id="toastUndo">Undo</button>

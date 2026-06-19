@@ -3,12 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TabVault – All Sessions</title>
+  <title>TabVault – Dashboard</title>
   <link rel="stylesheet" href="dashboard.css" />
 </head>
 <body>
   <div class="layout">
 
+    <!-- ── Sidebar ── -->
     <aside class="sidebar">
       <div class="brand">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -19,33 +20,61 @@
         <span>TabVault</span>
       </div>
 
+      <!-- Stats -->
       <div class="sidebar-stats" id="sidebarStats">
         <div class="stat"><span id="statSessions">0</span><small>sessions</small></div>
-        <div class="stat"><span id="statTabs">0</span><small>tabs saved</small></div>
+        <div class="stat"><span id="statTabs">0</span><small>tabs</small></div>
+        <div class="stat"><span id="statWeek">0</span><small>this week</small></div>
+        <div class="stat"><span id="statAI">0</span><small>AI-named</small></div>
       </div>
 
+      <!-- Filter nav -->
       <nav class="sidebar-nav">
         <button class="nav-item active" data-filter="all">All Sessions</button>
         <button class="nav-item" data-filter="pinned">Pinned</button>
         <button class="nav-item" data-filter="today">Today</button>
         <button class="nav-item" data-filter="week">This Week</button>
+        <button class="nav-item" data-filter="live">
+          <span class="live-indicator"></span> Live Windows
+        </button>
       </nav>
 
+      <!-- Tags -->
+      <div class="sidebar-tags" id="sidebarTags">
+        <div class="sidebar-section-hdr">
+          Tags
+          <button class="tag-new-btn" id="tagNewBtn" title="New tag">+</button>
+        </div>
+        <div id="tagList"></div>
+        <div class="new-tag-form hidden" id="newTagForm">
+          <input class="new-tag-input" id="newTagInput" placeholder="Tag name…" maxlength="24" />
+        </div>
+      </div>
+
+      <!-- Footer -->
       <div class="sidebar-footer">
         <button class="sidebar-btn" id="exportBtn">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           Export All
         </button>
-        <label class="sidebar-btn" id="importLabel">
+        <label class="sidebar-btn">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-          Import
+          Import File
           <input type="file" id="importFile" accept=".json" hidden />
         </label>
+        <button class="sidebar-btn" id="importCodeBtn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          Import Code
+        </button>
+        <div class="import-code-wrap hidden" id="importCodeWrap">
+          <input class="import-code-input" id="importCodeInput" placeholder="Paste tv1:… code" />
+          <button class="sidebar-btn-sm" id="importCodeSubmit">Import</button>
+        </div>
 
         <!-- AI Settings -->
         <div class="ai-settings">
           <div class="ai-settings-hdr">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
             AI Features
           </div>
           <input type="password" id="apiKeyInput" class="api-key-input" placeholder="sk-ant-api03-…" autocomplete="off" />
@@ -53,14 +82,14 @@
             <button class="sidebar-btn-sm" id="saveApiKey">Save Key</button>
             <button class="sidebar-btn-sm danger" id="clearApiKey">Clear</button>
           </div>
-          <p class="ai-settings-note">Claude API key for AI naming &amp; grouping. Get one at <span class="link-hint">console.anthropic.com</span></p>
+          <p class="ai-settings-note">Powers AI naming &amp; Smart Group. Get a key at <span class="link-hint">console.anthropic.com</span></p>
           <div class="api-key-status hidden" id="apiKeyStatus"></div>
         </div>
       </div>
     </aside>
 
+    <!-- ── Main ── -->
     <main class="main">
-
       <div class="topbar">
         <div class="search-wrap">
           <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
@@ -68,7 +97,7 @@
           </svg>
           <input id="search" class="search-input" type="text" placeholder="Search sessions and tabs…" autocomplete="off" />
         </div>
-        <div class="sort-wrap">
+        <div class="sort-wrap" id="sortWrap">
           <select id="sortSelect" class="sort-select">
             <option value="newest">Newest first</option>
             <option value="oldest">Oldest first</option>
@@ -89,9 +118,9 @@
         </div>
         <div id="sessionGrid" class="session-grid"></div>
       </div>
-
     </main>
 
+    <!-- ── Detail panel ── -->
     <aside class="detail-panel" id="detailPanel">
       <div class="detail-empty" id="detailEmpty">
         <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
@@ -102,11 +131,38 @@
       </div>
       <div class="detail-content hidden" id="detailContent">
         <div class="detail-header">
-          <div class="detail-title" id="detailTitle"></div>
+          <div class="detail-title-row">
+            <div class="detail-title" id="detailTitle"></div>
+            <button class="detail-share-btn" id="shareBtn" title="Share session">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            </button>
+          </div>
           <div class="detail-meta" id="detailMeta"></div>
+          <!-- Tags on session -->
+          <div class="detail-tags" id="detailTags"></div>
           <button class="detail-restore" id="detailRestore">Open in new window</button>
+          <!-- Share panel -->
+          <div class="share-panel hidden" id="sharePanel">
+            <div class="share-code" id="shareCode"></div>
+            <button class="share-copy-btn" id="shareCopyBtn">Copy Code</button>
+          </div>
         </div>
         <div class="tabs-list" id="tabsList"></div>
+        <!-- Notes -->
+        <div class="notes-section">
+          <label class="notes-label">Notes</label>
+          <textarea class="notes-textarea" id="sessionNotes" placeholder="Add context, links, or reminders for this session…" rows="3"></textarea>
+        </div>
+      </div>
+
+      <!-- Live window detail -->
+      <div class="detail-content hidden" id="windowDetailContent">
+        <div class="detail-header">
+          <div class="detail-title" id="windowDetailTitle">Window</div>
+          <div class="detail-meta" id="windowDetailMeta"></div>
+          <button class="detail-restore" id="saveWindowBtn">Save as Session</button>
+        </div>
+        <div class="tabs-list" id="windowTabsList"></div>
       </div>
     </aside>
 

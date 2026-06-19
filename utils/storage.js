@@ -1,8 +1,15 @@
-const KEY = 'tabvault_sessions';
+const KEY           = 'tabvault_sessions';
+const SNAP_KEY      = 'tabvault_snapshots';
+const TAGS_KEY      = 'tabvault_tags';
+const API_KEY_STORE = 'tabvault_apikey';
+
+const TAG_PALETTE = ['#6366f1','#10b981','#f59e0b','#ec4899','#3b82f6','#8b5cf6','#ef4444','#06b6d4'];
+
+// ── Sessions ──────────────────────────────────────────────────────────────────
 
 export async function getSessions() {
-  const result = await chrome.storage.local.get(KEY);
-  return result[KEY] || [];
+  const r = await chrome.storage.local.get(KEY);
+  return r[KEY] || [];
 }
 
 export async function getSession(id) {
@@ -18,6 +25,9 @@ export async function createSession(name, tabs, aiNamed = false) {
     createdAt: Date.now(),
     updatedAt: Date.now(),
     aiNamed: aiNamed || false,
+    pinned: false,
+    tags: [],
+    notes: '',
     tabs: tabs.map(t => ({
       url: t.url,
       title: t.title || t.url,
@@ -53,6 +63,24 @@ export async function pinSession(id, pinned) {
   await chrome.storage.local.set({ [KEY]: sessions });
 }
 
+export async function updateNotes(id, notes) {
+  const sessions = await getSessions();
+  const s = sessions.find(s => s.id === id);
+  if (!s) return;
+  s.notes = notes;
+  s.updatedAt = Date.now();
+  await chrome.storage.local.set({ [KEY]: sessions });
+}
+
+export async function setSessionTags(id, tags) {
+  const sessions = await getSessions();
+  const s = sessions.find(s => s.id === id);
+  if (!s) return;
+  s.tags = Array.isArray(tags) ? tags : [];
+  s.updatedAt = Date.now();
+  await chrome.storage.local.set({ [KEY]: sessions });
+}
+
 export async function exportSessions() {
   const sessions = await getSessions();
   return JSON.stringify({ version: 1, exportedAt: Date.now(), sessions }, null, 2);
@@ -68,7 +96,48 @@ export async function importSessions(jsonText) {
   return incoming.length;
 }
 
-const API_KEY_STORE = 'tabvault_apikey';
+// ── Auto-save snapshots ───────────────────────────────────────────────────────
+
+export async function getSnapshots() {
+  const r = await chrome.storage.local.get(SNAP_KEY);
+  return r[SNAP_KEY] || [];
+}
+
+export async function saveSnapshot(windows) {
+  const existing = await getSnapshots();
+  const snap = { id: generateId(), savedAt: Date.now(), windows };
+  await chrome.storage.local.set({ [SNAP_KEY]: [snap, ...existing].slice(0, 5) });
+  return snap;
+}
+
+// ── Tags ──────────────────────────────────────────────────────────────────────
+
+export async function getTags() {
+  const r = await chrome.storage.local.get(TAGS_KEY);
+  return r[TAGS_KEY] || {};
+}
+
+export async function upsertTag(name, color) {
+  const tags = await getTags();
+  if (!color) {
+    const used = Object.values(tags);
+    color = TAG_PALETTE.find(c => !used.includes(c)) || TAG_PALETTE[Object.keys(tags).length % TAG_PALETTE.length];
+  }
+  tags[name.trim()] = color;
+  await chrome.storage.local.set({ [TAGS_KEY]: tags });
+  return color;
+}
+
+export async function removeTagGlobal(name) {
+  const tags = await getTags();
+  delete tags[name];
+  await chrome.storage.local.set({ [TAGS_KEY]: tags });
+  const sessions = await getSessions();
+  sessions.forEach(s => { s.tags = (s.tags || []).filter(t => t !== name); });
+  await chrome.storage.local.set({ [KEY]: sessions });
+}
+
+// ── API key ───────────────────────────────────────────────────────────────────
 
 export async function getApiKey() {
   const r = await chrome.storage.local.get(API_KEY_STORE);
@@ -82,6 +151,19 @@ export async function setApiKey(key) {
     await chrome.storage.local.remove(API_KEY_STORE);
   }
 }
+
+// ── Onboarding ────────────────────────────────────────────────────────────────
+
+export async function hasOnboarded() {
+  const r = await chrome.storage.local.get('tabvault_onboarded');
+  return !!r.tabvault_onboarded;
+}
+
+export async function markOnboarded() {
+  await chrome.storage.local.set({ tabvault_onboarded: true });
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 function generateId() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
