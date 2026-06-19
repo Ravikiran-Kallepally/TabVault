@@ -46,6 +46,7 @@ function showOnboarding() {
   obStep = 0;
   $('onboarding').classList.remove('hidden');
   updateObStep();
+  $('obNext').addEventListener('click', advanceOnboarding);
 }
 
 function updateObStep() {
@@ -211,9 +212,6 @@ function highlight(text, query) {
 
 // ── Events ────────────────────────────────────────────────────────────────────
 function bindEvents() {
-  // Onboarding
-  $('obNext').addEventListener('click', advanceOnboarding);
-
   // Recovery
   $('recoveryRestore').addEventListener('click', restoreSnapshot);
   $('recoveryClose').addEventListener('click', () => {
