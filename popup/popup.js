@@ -581,10 +581,17 @@ function showMenu(id, anchor) {
   const rect = anchor.getBoundingClientRect();
   menu.classList.remove('hidden');
   const mw = menu.offsetWidth, mh = menu.offsetHeight;
-  let left = rect.right - mw, top = rect.bottom + 4;
+
+  let left = rect.right - mw;
   if (left < 4) left = 4;
+  if (left + mw > window.innerWidth - 4) left = window.innerWidth - mw - 4;
+
+  let top = rect.bottom + 4;
   if (top + mh > window.innerHeight - 4) top = rect.top - mh - 4;
-  menu.style.left = left + 'px'; menu.style.top = top + 'px';
+  if (top < 4) top = 4;
+
+  menu.style.left = left + 'px';
+  menu.style.top  = top  + 'px';
 }
 
 function hideMenu() { $('contextMenu').classList.add('hidden'); activeMenuId = null; }

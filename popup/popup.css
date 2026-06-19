@@ -592,6 +592,7 @@ html, body {
   position: fixed;
   z-index: 100;
   background: var(--surface);
+  border: 1px solid var(--border-2);
   border-radius: var(--r-sm);
   box-shadow: 0 2px 6px rgba(60,64,67,0.15), 0 8px 24px rgba(60,64,67,0.12);
   padding: 6px 0;
@@ -838,12 +839,14 @@ html, body {
 [data-theme="dark"] .btn-confirm:hover   { box-shadow: none; }
 [data-theme="dark"] .ob-next:hover       { box-shadow: none; }
 
-/* Popovers/menus need their own shadow in dark */
+/* Popovers/menus need their own shadow + visible border in dark */
 [data-theme="dark"] .context-menu {
   box-shadow: 0 8px 32px rgba(0,0,0,0.7), 0 2px 8px rgba(0,0,0,0.4);
+  border-color: rgba(255,255,255,0.18);
 }
 [data-theme="dark"] .tag-popover {
   box-shadow: 0 8px 28px rgba(0,0,0,0.7);
+  border: 1px solid rgba(255,255,255,0.18);
 }
 
 /* Recovery banner */
