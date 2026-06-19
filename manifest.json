@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "TabVault – Session Manager",
+  "short_name": "TabVault",
+  "version": "0.1.0",
+  "description": "Save, search and restore browser sessions. Local-first. No account needed.",
+  "permissions": ["tabs", "storage"],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "TabVault"
+  },
+  "background": {
+    "service_worker": "background/service-worker.js",
+    "type": "module"
+  },
+  "options_page": "dashboard/dashboard.html",
+  "commands": {
+    "save-session": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+S",
+        "mac": "Command+Shift+S"
+      },
+      "description": "Save current window as a session"
+    }
+  }
+}

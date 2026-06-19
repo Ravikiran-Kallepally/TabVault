@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TabVault – All Sessions</title>
+  <link rel="stylesheet" href="dashboard.css" />
+</head>
+<body>
+  <div class="layout">
+
+    <aside class="sidebar">
+      <div class="brand">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <rect x="3" y="3" width="18" height="18" rx="4" fill="#6366f1" opacity="0.15"/>
+          <rect x="3" y="3" width="18" height="18" rx="4" stroke="#6366f1" stroke-width="1.5"/>
+          <path d="M8 12h8M8 8h5M8 16h6" stroke="#6366f1" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <span>TabVault</span>
+      </div>
+
+      <div class="sidebar-stats" id="sidebarStats">
+        <div class="stat"><span id="statSessions">0</span><small>sessions</small></div>
+        <div class="stat"><span id="statTabs">0</span><small>tabs saved</small></div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-filter="all">All Sessions</button>
+        <button class="nav-item" data-filter="pinned">Pinned</button>
+        <button class="nav-item" data-filter="today">Today</button>
+        <button class="nav-item" data-filter="week">This Week</button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="sidebar-btn" id="exportBtn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export All
+        </button>
+        <label class="sidebar-btn" id="importLabel">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Import
+          <input type="file" id="importFile" accept=".json" hidden />
+        </label>
+      </div>
+    </aside>
+
+    <main class="main">
+
+      <div class="topbar">
+        <div class="search-wrap">
+          <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/>
+          </svg>
+          <input id="search" class="search-input" type="text" placeholder="Search sessions and tabs…" autocomplete="off" />
+        </div>
+        <div class="sort-wrap">
+          <select id="sortSelect" class="sort-select">
+            <option value="newest">Newest first</option>
+            <option value="oldest">Oldest first</option>
+            <option value="name">Name A–Z</option>
+            <option value="tabs">Most tabs</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="content" id="content">
+        <div class="empty-state" id="emptyState" style="display:none">
+          <svg width="56" height="56" viewBox="0 0 24 24" fill="none">
+            <rect x="3" y="3" width="18" height="18" rx="4" stroke="#6366f1" stroke-width="1" opacity="0.4"/>
+            <path d="M8 12h8M8 8h5M8 16h6" stroke="#6366f1" stroke-width="1" stroke-linecap="round" opacity="0.4"/>
+          </svg>
+          <h3 id="emptyTitle">No sessions yet</h3>
+          <p id="emptyMsg">Open the extension popup and save your first session.</p>
+        </div>
+        <div id="sessionGrid" class="session-grid"></div>
+      </div>
+
+    </main>
+
+    <aside class="detail-panel" id="detailPanel">
+      <div class="detail-empty" id="detailEmpty">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
+          <path d="M9 12h6M9 8h4M9 16h5" stroke="#4a4f6a" stroke-width="1.5" stroke-linecap="round"/>
+          <rect x="3" y="3" width="18" height="18" rx="4" stroke="#4a4f6a" stroke-width="1.2"/>
+        </svg>
+        <p>Select a session<br/>to preview its tabs</p>
+      </div>
+      <div class="detail-content hidden" id="detailContent">
+        <div class="detail-header">
+          <div class="detail-title" id="detailTitle"></div>
+          <div class="detail-meta" id="detailMeta"></div>
+          <button class="detail-restore" id="detailRestore">Open in new window</button>
+        </div>
+        <div class="tabs-list" id="tabsList"></div>
+      </div>
+    </aside>
+
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script type="module" src="dashboard.js"></script>
+</body>
+</html>

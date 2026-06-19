@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TabVault</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div class="app">
+
+    <header class="header">
+      <div class="logo">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <rect x="3" y="3" width="18" height="18" rx="4" fill="#6366f1" opacity="0.15"/>
+          <rect x="3" y="3" width="18" height="18" rx="4" stroke="#6366f1" stroke-width="1.5"/>
+          <path d="M8 12h8M8 8h5M8 16h6" stroke="#6366f1" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <span>TabVault</span>
+      </div>
+      <button class="icon-btn" id="openDashboard" title="Open full dashboard">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+          <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+        </svg>
+      </button>
+    </header>
+
+    <div class="search-wrap">
+      <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+        <circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/>
+      </svg>
+      <input id="search" class="search-input" type="text" placeholder="Search sessions and tabs…" autocomplete="off" />
+      <button class="clear-btn hidden" id="clearSearch">✕</button>
+    </div>
+
+    <div class="save-bar" id="saveBar">
+      <div class="tab-count-info">
+        <span id="currentTabCount" class="tab-count-badge">—</span>
+        <span class="tab-count-label">tabs open</span>
+      </div>
+      <button class="btn-save" id="saveBtn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+          <polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+        </svg>
+        Save Session
+      </button>
+    </div>
+
+    <div class="name-bar hidden" id="nameBar">
+      <input id="nameInput" class="name-input" type="text" placeholder="Name this session…" maxlength="60" />
+      <div class="name-actions">
+        <button class="btn-ghost" id="cancelSave">Cancel</button>
+        <button class="btn-confirm" id="confirmSave">Save</button>
+      </div>
+    </div>
+
+    <div class="sessions-header">
+      <span class="sessions-label">Sessions</span>
+      <span class="sessions-count" id="sessionsCount">0</span>
+    </div>
+
+    <div class="sessions-list" id="sessionsList">
+      <div class="empty-state" id="emptyState">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
+          <rect x="3" y="3" width="18" height="18" rx="4" stroke="#6366f1" stroke-width="1.2" opacity="0.4"/>
+          <path d="M8 12h8M8 8h5M8 16h6" stroke="#6366f1" stroke-width="1.2" stroke-linecap="round" opacity="0.4"/>
+        </svg>
+        <p>No sessions yet</p>
+        <span>Save your first session above</span>
+      </div>
+    </div>
+
+    <div class="context-menu hidden" id="contextMenu">
+      <button class="menu-item" data-action="restore-new">Open in new window</button>
+      <button class="menu-item" data-action="restore-here">Add to this window</button>
+      <div class="menu-divider"></div>
+      <button class="menu-item" data-action="rename">Rename</button>
+      <button class="menu-item" data-action="pin">Pin to top</button>
+      <div class="menu-divider"></div>
+      <button class="menu-item danger" data-action="delete">Delete</button>
+    </div>
+
+  </div>
+  <script type="module" src="popup.js"></script>
+</body>
+</html>
