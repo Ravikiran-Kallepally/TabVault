@@ -109,11 +109,12 @@ body {
 .nav-item.active { background: var(--accent-dim); color: var(--accent); font-weight: 500; }
 
 .sidebar-footer {
-  padding: 12px 8px 0;
+  padding: 12px 8px 12px;
   border-top: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   gap: 2px;
+  overflow-y: auto;
 }
 
 .sidebar-btn {
@@ -411,7 +412,81 @@ body {
 .tab-title { font-size: 12px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tab-url { font-size: 10.5px; color: var(--text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-/* ── Toast ───────────────────────────────────── */
+/* ── AI dot on cards ──────────────────────────── */
+.card-ai-dot { font-size: 10px; margin-left: 4px; }
+
+/* ── AI Settings section ─────────────────────── */
+.ai-settings {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ai-settings-hdr {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-3);
+}
+
+.api-key-input {
+  width: 100%;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 11.5px;
+  padding: 6px 8px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.api-key-input::placeholder { color: var(--text-3); font-size: 10.5px; }
+.api-key-input:focus { border-color: var(--accent); }
+
+.ai-settings-row {
+  display: flex;
+  gap: 6px;
+}
+
+.sidebar-btn-sm {
+  flex: 1;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  border-radius: var(--radius-sm);
+  padding: 5px 8px;
+  font-size: 11.5px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  text-align: center;
+}
+.sidebar-btn-sm:hover { background: var(--surface-3); color: var(--text); }
+.sidebar-btn-sm.danger:hover { background: rgba(239,68,68,0.12); color: var(--danger); border-color: var(--danger); }
+
+.ai-settings-note {
+  font-size: 10.5px;
+  color: var(--text-3);
+  line-height: 1.4;
+}
+
+.link-hint { color: var(--accent); }
+
+.api-key-status {
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+.api-key-status.ok { color: var(--success); background: rgba(16,185,129,0.1); }
+.api-key-status.hidden { display: none; }
+
+/* ── Toast with Undo ─────────────────────────── */
 .toast {
   position: fixed;
   bottom: 20px;
@@ -420,7 +495,7 @@ body {
   background: var(--surface-3);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 10px 20px;
+  padding: 10px 14px 10px 20px;
   font-size: 13px;
   color: var(--text);
   box-shadow: 0 4px 20px rgba(0,0,0,0.4);
@@ -428,5 +503,24 @@ body {
   transition: opacity 0.2s, transform 0.2s;
   pointer-events: none;
   z-index: 200;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  white-space: nowrap;
 }
-.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto; }
+
+.toast-undo {
+  background: var(--accent-dim);
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  border-radius: 5px;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+.toast-undo:hover { background: rgba(99,102,241,0.3); }
+.toast-undo.hidden { display: none; }

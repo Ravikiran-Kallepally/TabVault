@@ -41,6 +41,21 @@
           Import
           <input type="file" id="importFile" accept=".json" hidden />
         </label>
+
+        <!-- AI Settings -->
+        <div class="ai-settings">
+          <div class="ai-settings-hdr">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
+            AI Features
+          </div>
+          <input type="password" id="apiKeyInput" class="api-key-input" placeholder="sk-ant-api03-…" autocomplete="off" />
+          <div class="ai-settings-row">
+            <button class="sidebar-btn-sm" id="saveApiKey">Save Key</button>
+            <button class="sidebar-btn-sm danger" id="clearApiKey">Clear</button>
+          </div>
+          <p class="ai-settings-note">Claude API key for AI naming &amp; grouping. Get one at <span class="link-hint">console.anthropic.com</span></p>
+          <div class="api-key-status hidden" id="apiKeyStatus"></div>
+        </div>
       </div>
     </aside>
 
@@ -97,7 +112,10 @@
 
   </div>
 
-  <div class="toast" id="toast"></div>
+  <div class="toast" id="toastEl">
+    <span class="toast-msg" id="toastMsg"></span>
+    <button class="toast-undo hidden" id="toastUndo">Undo</button>
+  </div>
 
   <script type="module" src="dashboard.js"></script>
 </body>

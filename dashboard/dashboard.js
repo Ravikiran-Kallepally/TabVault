@@ -1,11 +1,16 @@
-import { getSessions, deleteSession, renameSession, pinSession, exportSessions, importSessions } from '../utils/storage.js';
-import { timeAgo, getDomain, getFavLetter, domainColor, truncate, isValidUrl, escapeHtml } from '../utils/helpers.js';
+import { getSessions, deleteSession, renameSession, pinSession, exportSessions, importSessions, getApiKey, setApiKey } from '../utils/storage.js';
+import { timeAgo, getDomain, getFavLetter, domainColor, truncate, escapeHtml } from '../utils/helpers.js';
 
-let allSessions = [];
-let selectedId = null;
+let allSessions  = [];
+let selectedId   = null;
 let activeFilter = 'all';
-let searchQuery = '';
-let sortMode = 'newest';
+let searchQuery  = '';
+let sortMode     = 'newest';
+
+// undo-delete state
+let pendingDelete = null;
+let deleteTimer   = null;
+let toastTimer    = null;
 
 const $ = id => document.getElementById(id);
 
@@ -14,23 +19,38 @@ async function init() {
   updateStats();
   render();
   bindEvents();
+  await loadApiKeyStatus();
 }
 
 function updateStats() {
   $('statSessions').textContent = allSessions.length;
-  $('statTabs').textContent = allSessions.reduce((n, s) => n + s.tabs.length, 0);
+  $('statTabs').textContent     = allSessions.reduce((n, s) => n + s.tabs.length, 0);
 }
 
+async function loadApiKeyStatus() {
+  const key     = await getApiKey();
+  const input   = $('apiKeyInput');
+  const status  = $('apiKeyStatus');
+  if (key) {
+    input.placeholder = '••••••••••••' + key.slice(-4);
+    status.textContent = '✓ API key saved';
+    status.className   = 'api-key-status ok';
+    status.classList.remove('hidden');
+  }
+}
+
+// ── Filtering / sorting ───────────────────────────────────────────────────────
+
 function getFiltered() {
-  const now = Date.now();
-  const DAY = 86400000;
+  const now  = Date.now();
+  const DAY  = 86400000;
   const WEEK = 7 * DAY;
 
   let sessions = [...allSessions];
 
   if (activeFilter === 'pinned') sessions = sessions.filter(s => s.pinned);
   else if (activeFilter === 'today') sessions = sessions.filter(s => now - s.createdAt < DAY);
-  else if (activeFilter === 'week') sessions = sessions.filter(s => now - s.createdAt < WEEK);
+  else if (activeFilter === 'week')  sessions = sessions.filter(s => now - s.createdAt < WEEK);
 
   if (searchQuery) {
     const q = searchQuery.toLowerCase();
@@ -43,28 +63,28 @@ function getFiltered() {
   sessions.sort((a, b) => {
     if (sortMode === 'newest') return b.createdAt - a.createdAt;
     if (sortMode === 'oldest') return a.createdAt - b.createdAt;
-    if (sortMode === 'name') return a.name.localeCompare(b.name);
-    if (sortMode === 'tabs') return b.tabs.length - a.tabs.length;
+    if (sortMode === 'name')   return a.name.localeCompare(b.name);
+    if (sortMode === 'tabs')   return b.tabs.length - a.tabs.length;
     return 0;
   });
 
   const pinned = sessions.filter(s => s.pinned);
-  const rest = sessions.filter(s => !s.pinned);
+  const rest   = sessions.filter(s => !s.pinned);
   return [...pinned, ...rest];
 }
 
+// ── Render ────────────────────────────────────────────────────────────────────
+
 function render() {
   const filtered = getFiltered();
-  const grid = $('sessionGrid');
-  const empty = $('emptyState');
+  const grid     = $('sessionGrid');
+  const empty    = $('emptyState');
 
   if (!filtered.length) {
-    grid.innerHTML = '';
+    grid.innerHTML     = '';
     empty.style.display = 'flex';
     $('emptyTitle').textContent = searchQuery ? 'No matches found' : 'No sessions yet';
-    $('emptyMsg').textContent = searchQuery
-      ? 'Try different keywords.'
-      : 'Open the extension popup and save your first session.';
+    $('emptyMsg').textContent   = searchQuery ? 'Try different keywords.' : 'Open the extension popup and save your first session.';
     return;
   }
 
@@ -75,15 +95,15 @@ function render() {
     img.addEventListener('error', () => {
       const fav = img.closest('.card-fav');
       fav.style.background = domainColor(fav.dataset.url || '');
-      fav.textContent = getFavLetter(fav.dataset.url || '');
+      fav.textContent      = getFavLetter(fav.dataset.url || '');
     });
   });
 }
 
 function cardHTML(s) {
-  const preview = s.tabs.slice(0, 8);
+  const preview  = s.tabs.slice(0, 8);
   const favsHTML = preview.map(t => {
-    const color = domainColor(t.url);
+    const color  = domainColor(t.url);
     const letter = getFavLetter(t.url);
     if (t.favIconUrl && t.favIconUrl.startsWith('http')) {
       return `<div class="card-fav" data-url="${escapeHtml(t.url)}" style="background:${color}">
@@ -93,9 +113,11 @@ function cardHTML(s) {
     return `<div class="card-fav" style="background:${color}">${letter}</div>`;
   }).join('');
 
+  const aiDot = s.aiNamed ? `<span class="card-ai-dot" title="AI-named">✨</span>` : '';
+
   return `<div class="session-card ${s.pinned ? 'pinned' : ''} ${selectedId === s.id ? 'selected' : ''}" data-id="${s.id}">
     <div class="card-favicons">${favsHTML}</div>
-    <div class="card-name" title="${escapeHtml(s.name)}">${escapeHtml(truncate(s.name, 32))}</div>
+    <div class="card-name" title="${escapeHtml(s.name)}">${escapeHtml(truncate(s.name, 32))}${aiDot}</div>
     <div class="card-meta">
       <span>${s.tabs.length} tab${s.tabs.length !== 1 ? 's' : ''}</span>
       <span class="card-dot">·</span>
@@ -109,6 +131,8 @@ function cardHTML(s) {
   </div>`;
 }
 
+// ── Detail panel ──────────────────────────────────────────────────────────────
+
 function showDetail(id) {
   const s = allSessions.find(s => s.id === id);
   if (!s) return;
@@ -121,14 +145,14 @@ function showDetail(id) {
   content.classList.remove('hidden');
 
   $('detailTitle').textContent = s.name;
-  $('detailMeta').textContent = `${s.tabs.length} tabs · saved ${timeAgo(s.createdAt)}`;
+  $('detailMeta').textContent  = `${s.tabs.length} tabs · saved ${timeAgo(s.createdAt)}`;
 
   $('detailRestore').onclick = () => {
     chrome.windows.create({ url: s.tabs.map(t => t.url).filter(Boolean) });
   };
 
   $('tabsList').innerHTML = s.tabs.map(t => {
-    const color = domainColor(t.url);
+    const color  = domainColor(t.url);
     const letter = getFavLetter(t.url);
     let favHTML;
     if (t.favIconUrl && t.favIconUrl.startsWith('http')) {
@@ -151,21 +175,17 @@ function showDetail(id) {
     img.addEventListener('error', () => {
       const fav = img.closest('.tab-fav');
       fav.style.background = domainColor(fav.dataset.url || '');
-      fav.textContent = getFavLetter(fav.dataset.url || '');
+      fav.textContent      = getFavLetter(fav.dataset.url || '');
     });
   });
 }
 
-function bindEvents() {
-  $('search').addEventListener('input', e => {
-    searchQuery = e.target.value;
-    render();
-  });
+// ── Events ────────────────────────────────────────────────────────────────────
 
-  $('sortSelect').addEventListener('change', e => {
-    sortMode = e.target.value;
-    render();
-  });
+function bindEvents() {
+  $('search').addEventListener('input', e => { searchQuery = e.target.value; render(); });
+
+  $('sortSelect').addEventListener('change', e => { sortMode = e.target.value; render(); });
 
   document.querySelectorAll('.nav-item').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -178,28 +198,22 @@ function bindEvents() {
 
   $('sessionGrid').addEventListener('click', async e => {
     const btn = e.target.closest('[data-action]');
-    if (btn) {
-      e.stopPropagation();
-      await handleCardAction(btn.dataset.action, btn.dataset.id);
-      return;
-    }
+    if (btn) { e.stopPropagation(); await handleCardAction(btn.dataset.action, btn.dataset.id); return; }
     const card = e.target.closest('.session-card');
     if (card) showDetail(card.dataset.id);
   });
 
   $('tabsList').addEventListener('click', e => {
     const item = e.target.closest('.tab-item');
-    if (item && item.dataset.url) {
-      chrome.tabs.create({ url: item.dataset.url });
-    }
+    if (item && item.dataset.url) chrome.tabs.create({ url: item.dataset.url });
   });
 
   $('exportBtn').addEventListener('click', async () => {
     const json = await exportSessions();
     const blob = new Blob([json], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
     a.download = `tabvault-export-${new Date().toISOString().slice(0,10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
@@ -210,7 +224,7 @@ function bindEvents() {
     const file = e.target.files[0];
     if (!file) return;
     try {
-      const text = await file.text();
+      const text  = await file.text();
       const count = await importSessions(text);
       allSessions = await getSessions();
       updateStats();
@@ -221,7 +235,32 @@ function bindEvents() {
     }
     e.target.value = '';
   });
+
+  // API key management
+  $('saveApiKey').addEventListener('click', async () => {
+    const val    = $('apiKeyInput').value.trim();
+    const status = $('apiKeyStatus');
+    if (!val) { showToast('Enter a key first'); return; }
+    await setApiKey(val);
+    $('apiKeyInput').value       = '';
+    $('apiKeyInput').placeholder = '••••••••••••' + val.slice(-4);
+    status.textContent           = '✓ API key saved';
+    status.className             = 'api-key-status ok';
+    status.classList.remove('hidden');
+    showToast('API key saved');
+  });
+
+  $('clearApiKey').addEventListener('click', async () => {
+    await setApiKey('');
+    $('apiKeyInput').value       = '';
+    $('apiKeyInput').placeholder = 'sk-ant-api03-…';
+    const status = $('apiKeyStatus');
+    status.classList.add('hidden');
+    showToast('API key cleared');
+  });
 }
+
+// ── Card actions + undo delete ────────────────────────────────────────────────
 
 async function handleCardAction(action, id) {
   const s = allSessions.find(s => s.id === id);
@@ -242,27 +281,67 @@ async function handleCardAction(action, id) {
   }
 
   if (action === 'delete') {
-    await deleteSession(id);
-    allSessions = await getSessions();
-    if (selectedId === id) {
-      selectedId = null;
-      $('detailEmpty').style.display = 'flex';
-      $('detailContent').classList.add('hidden');
-    }
-    updateStats();
-    render();
-    showToast('Session deleted');
+    deleteWithUndo(id);
     return;
   }
 }
 
-let toastTimer;
-function showToast(msg) {
-  const toast = $('toast');
-  toast.textContent = msg;
+function deleteWithUndo(id) {
+  if (pendingDelete) {
+    clearTimeout(deleteTimer);
+    deleteSession(pendingDelete.id);
+  }
+
+  pendingDelete = allSessions.find(s => s.id === id);
+  if (!pendingDelete) return;
+
+  allSessions = allSessions.filter(s => s.id !== id);
+
+  if (selectedId === id) {
+    selectedId = null;
+    $('detailEmpty').style.display = 'flex';
+    $('detailContent').classList.add('hidden');
+  }
+
+  updateStats();
+  render();
+
+  showToast(`"${truncate(pendingDelete.name, 28)}" deleted`, async () => {
+    clearTimeout(deleteTimer);
+    allSessions   = await getSessions();
+    pendingDelete = null;
+    updateStats();
+    render();
+  });
+
+  deleteTimer = setTimeout(async () => {
+    if (pendingDelete) {
+      await deleteSession(pendingDelete.id);
+      pendingDelete = null;
+    }
+  }, 5000);
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+
+function showToast(msg, onUndo) {
+  const toast   = $('toastEl');
+  const msgEl   = $('toastMsg');
+  const undoBtn = $('toastUndo');
+
+  msgEl.textContent = msg;
+
+  if (onUndo) {
+    undoBtn.classList.remove('hidden');
+    undoBtn.onclick = () => { onUndo(); toast.classList.remove('show'); };
+  } else {
+    undoBtn.classList.add('hidden');
+    undoBtn.onclick = null;
+  }
+
   toast.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => toast.classList.remove('show'), 2400);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), onUndo ? 5000 : 2400);
 }
 
 init();

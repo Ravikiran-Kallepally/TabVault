@@ -10,13 +10,14 @@ export async function getSession(id) {
   return sessions.find(s => s.id === id) || null;
 }
 
-export async function createSession(name, tabs) {
+export async function createSession(name, tabs, aiNamed = false) {
   const sessions = await getSessions();
   const session = {
     id: generateId(),
     name: name.trim() || autoName(),
     createdAt: Date.now(),
     updatedAt: Date.now(),
+    aiNamed: aiNamed || false,
     tabs: tabs.map(t => ({
       url: t.url,
       title: t.title || t.url,
@@ -65,6 +66,21 @@ export async function importSessions(jsonText) {
   const merged = [...existing, ...incoming.filter(s => !existingIds.has(s.id))];
   await chrome.storage.local.set({ [KEY]: merged });
   return incoming.length;
+}
+
+const API_KEY_STORE = 'tabvault_apikey';
+
+export async function getApiKey() {
+  const r = await chrome.storage.local.get(API_KEY_STORE);
+  return r[API_KEY_STORE] || null;
+}
+
+export async function setApiKey(key) {
+  if (key && key.trim()) {
+    await chrome.storage.local.set({ [API_KEY_STORE]: key.trim() });
+  } else {
+    await chrome.storage.local.remove(API_KEY_STORE);
+  }
 }
 
 function generateId() {

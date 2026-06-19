@@ -39,17 +39,26 @@
         <span id="currentTabCount" class="tab-count-badge">—</span>
         <span class="tab-count-label">tabs open</span>
       </div>
-      <button class="btn-save" id="saveBtn">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
-          <polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
-        </svg>
-        Save Session
-      </button>
+      <div class="save-actions">
+        <button class="btn-ai-group" id="smartGroupBtn" title="AI: Smart Group &amp; Save">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
+          Group
+        </button>
+        <button class="btn-save" id="saveBtn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+            <polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+          </svg>
+          Save
+        </button>
+      </div>
     </div>
 
     <div class="name-bar hidden" id="nameBar">
-      <input id="nameInput" class="name-input" type="text" placeholder="Name this session…" maxlength="60" />
+      <div class="name-input-wrap">
+        <input id="nameInput" class="name-input" type="text" placeholder="Name this session…" maxlength="60" />
+        <span class="ai-badge hidden" id="aiBadge">✨ AI</span>
+      </div>
       <div class="name-actions">
         <button class="btn-ghost" id="cancelSave">Cancel</button>
         <button class="btn-confirm" id="confirmSave">Save</button>
@@ -82,7 +91,31 @@
       <button class="menu-item danger" data-action="delete">Delete</button>
     </div>
 
+    <!-- AI Smart Group overlay -->
+    <div class="group-overlay hidden" id="groupOverlay">
+      <div class="group-hdr">
+        <span>Smart Group &amp; Save</span>
+        <button class="icon-btn" id="closeGroupOverlay">✕</button>
+      </div>
+      <div class="group-loading" id="groupLoading">
+        <div class="spinner"></div>
+        <p>Analyzing tabs with AI…</p>
+      </div>
+      <div class="group-results hidden" id="groupResults"></div>
+      <div class="group-footer hidden" id="groupFooter">
+        <button class="btn-ghost" id="cancelGroupSave">Cancel</button>
+        <button class="btn-confirm" id="confirmGroupSave">Save All Groups</button>
+      </div>
+    </div>
+
   </div>
+
+  <!-- Static toast with undo support -->
+  <div class="toast" id="toastEl">
+    <span class="toast-msg" id="toastMsg"></span>
+    <button class="toast-undo hidden" id="toastUndo">Undo</button>
+  </div>
+
   <script type="module" src="popup.js"></script>
 </body>
 </html>
