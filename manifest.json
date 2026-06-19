@@ -4,7 +4,7 @@
   "short_name": "TabVault",
   "version": "0.3.0",
   "description": "Save, search and restore browser sessions with AI. Local-first. No account needed.",
-  "permissions": ["tabs", "storage", "windows", "alarms", "contextMenus"],
+  "permissions": ["tabs", "storage", "windows", "alarms", "contextMenus", "tabGroups"],
   "host_permissions": ["https://api.anthropic.com/*"],
   "icons": {
     "16":  "icons/icon16.png",

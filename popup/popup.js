@@ -1,5 +1,5 @@
 import {
-  getSessions, createSession, deleteSession, renameSession, pinSession,
+  getSessions, createSession, deleteSession, renameSession, pinSession, duplicateSession,
   getTags, upsertTag, setSessionTags,
   getSnapshots, getApiKey,
   hasOnboarded, markOnboarded
@@ -23,6 +23,12 @@ let recoverySnapshot   = null;
 
 const $ = id => document.getElementById(id);
 
+// Chrome tab group color → hex
+const GC = {
+  grey:'#5f6368', blue:'#1a73e8', red:'#d93025', yellow:'#f9ab00',
+  green:'#34a853', pink:'#e91e8c', purple:'#9c27b0', cyan:'#00bcd4', orange:'#f57c00'
+};
+
 // ── Boot ──────────────────────────────────────────────────────────────────────
 async function init() {
   if (!(await hasOnboarded())) { showOnboarding(); return; }
@@ -35,7 +41,7 @@ async function init() {
 
 async function loadAll() {
   [allSessions, allTags] = await Promise.all([getSessions(), getTags()]);
-  const tabs  = await chrome.tabs.query({ currentWindow: true });
+  const tabs = await chrome.tabs.query({ currentWindow: true });
   $('currentTabCount').textContent = tabs.filter(t => isValidUrl(t.url)).length;
 }
 
@@ -54,7 +60,7 @@ function updateObStep() {
     $(`obStep${i}`).classList.toggle('hidden', i !== obStep);
   }
   $('obDots').querySelectorAll('.ob-dot').forEach((d, i) => d.classList.toggle('active', i === obStep));
-  $('obNext').textContent = obStep === OB_TOTAL - 1 ? 'Get Started →' : 'Next';
+  $('obNext').textContent = obStep === OB_TOTAL - 1 ? 'Get Started →' : 'Next →';
 }
 
 async function advanceOnboarding() {
@@ -81,9 +87,8 @@ async function checkRecovery() {
   const totalTabs  = recoverySnapshot.windows.reduce((n, w) => n + w.tabs.length, 0);
   if (!totalTabs) return;
 
-  const banner = $('recoveryBanner');
   $('recoverySub').textContent = `${totalTabs} tabs · ${timeAgo(recoverySnapshot.savedAt)}`;
-  banner.classList.remove('hidden');
+  $('recoveryBanner').classList.remove('hidden');
 }
 
 async function restoreSnapshot() {
@@ -106,8 +111,8 @@ function render() {
 
   if (activeTag) sessions = sessions.filter(s => (s.tags || []).includes(activeTag));
 
-  let filtered    = sessions;
-  const matchMap  = {};
+  let filtered   = sessions;
+  const matchMap = {};
 
   if (query) {
     filtered = sessions.filter(s => {
@@ -138,8 +143,8 @@ function render() {
   list.querySelectorAll('.fav img').forEach(img => {
     img.addEventListener('error', () => {
       const fav = img.closest('.fav');
+      fav.innerHTML = getFavLetter(fav.dataset.url || '');
       fav.style.background = domainColor(fav.dataset.url || '');
-      fav.textContent      = getFavLetter(fav.dataset.url || '');
     });
   });
 }
@@ -159,30 +164,37 @@ function renderTagFilter() {
 }
 
 function sessionHTML(s, matchCount, query) {
-  const favs     = s.tabs.slice(0, 4);
-  const favsHTML = favs.map(t => {
+  const MAX_FAVS   = 6;
+  const favSlice   = s.tabs.slice(0, MAX_FAVS);
+  const overflow   = s.tabs.length - MAX_FAVS;
+  const favsHTML   = favSlice.map(t => {
     const color  = domainColor(t.url);
     const letter = getFavLetter(t.url);
     if (t.favIconUrl && t.favIconUrl.startsWith('http')) {
-      return `<div class="fav" data-url="${escapeHtml(t.url)}" style="background:${color}">
+      return `<div class="fav" data-url="${escapeHtml(t.url)}" title="${escapeHtml(t.title)}" style="background:${color}">
         <img src="${escapeHtml(t.favIconUrl)}" alt="" loading="lazy" /></div>`;
     }
-    return `<div class="fav" style="background:${color}">${letter}</div>`;
-  }).join('');
+    return `<div class="fav" data-url="${escapeHtml(t.url)}" title="${escapeHtml(t.title)}" style="background:${color}">${letter}</div>`;
+  }).join('') + (overflow > 0 ? `<div class="fav-more">+${overflow}</div>` : '');
 
   const matchHTML = (matchCount && query)
-    ? `<div class="match-tabs">${matchCount} tab${matchCount > 1 ? 's' : ''} matched</div>` : '';
+    ? `<div class="match-badge">${matchCount} tab${matchCount > 1 ? 's' : ''} matched</div>` : '';
 
   const tagsHTML = (s.tags || []).length
     ? `<div class="session-tags">${(s.tags).slice(0, 3).map(tag => {
         const c = allTags[tag] || '#6366f1';
         return `<span class="tag-chip" style="--tc:${c}">${escapeHtml(tag)}</span>`;
-      }).join('')}${s.tags.length > 3 ? `<span class="tag-chip tag-more">+${s.tags.length-3}</span>` : ''}</div>` : '';
+      }).join('')}${s.tags.length > 3 ? `<span class="tag-chip tag-more">+${s.tags.length - 3}</span>` : ''}</div>` : '';
 
-  const aiDot = s.aiNamed ? `<span class="ai-dot" title="AI-named">✨</span>` : '';
+  const groups = s.groups || [];
+  const groupDotsHTML = groups.length
+    ? `<div class="group-dots">${groups.slice(0, 5).map(g =>
+        `<span class="group-dot" style="background:${GC[g.color] || '#888'}" title="${escapeHtml(g.title)}"></span>`
+      ).join('')}${groups.length > 1 && groups[0]?.title ? `<span class="group-dot-label">${escapeHtml(groups[0].title)}${groups.length > 1 ? ` +${groups.length - 1}` : ''}</span>` : ''}</div>` : '';
+
+  const aiDot = s.aiNamed ? `<span class="ai-dot" title="AI-named">✦</span>` : '';
 
   return `<div class="session-item ${s.pinned ? 'pinned' : ''}" data-id="${s.id}" tabindex="0">
-    <div class="pin-dot"></div>
     <div class="favicons">${favsHTML}</div>
     <div class="session-info">
       <div class="session-name">${highlight(truncate(s.name, 34), query)}${aiDot}</div>
@@ -191,10 +203,10 @@ function sessionHTML(s, matchCount, query) {
         <span class="dot">·</span>
         <span>${timeAgo(s.createdAt)}</span>
       </div>
-      ${matchHTML}${tagsHTML}
+      ${matchHTML}${groupDotsHTML}${tagsHTML}
     </div>
     <div class="session-actions">
-      <button class="action-btn restore" data-id="${s.id}" data-action="restore-new" title="Open">↗</button>
+      <button class="action-btn restore" data-id="${s.id}" data-action="restore-new" title="Open in new window">↗</button>
       <button class="action-btn" data-id="${s.id}" data-action="tag" title="Tags">🏷</button>
       <button class="action-btn" data-id="${s.id}" data-action="menu" title="More">⋯</button>
     </div>
@@ -208,6 +220,58 @@ function highlight(text, query) {
   return escapeHtml(text.slice(0, idx))
     + `<mark>${escapeHtml(text.slice(idx, idx + query.length))}</mark>`
     + escapeHtml(text.slice(idx + query.length));
+}
+
+// ── Tab Groups ────────────────────────────────────────────────────────────────
+async function captureTabGroups(tabs) {
+  const groupIndexMap = {};
+  const groups = [];
+
+  for (const tab of tabs) {
+    if (tab.groupId != null && tab.groupId !== -1 && groupIndexMap[tab.groupId] == null) {
+      try {
+        const g = await chrome.tabGroups.get(tab.groupId);
+        groupIndexMap[tab.groupId] = groups.length;
+        groups.push({ title: g.title || '', color: g.color });
+      } catch {}
+    }
+  }
+
+  const tabsWithGroups = tabs.map(t => ({
+    ...t,
+    groupIndex: (t.groupId != null && t.groupId !== -1) ? (groupIndexMap[t.groupId] ?? -1) : -1
+  }));
+
+  return { tabsWithGroups, groups };
+}
+
+async function restoreWithGroups(s) {
+  const validTabs = s.tabs.filter(t => t.url && isValidUrl(t.url));
+  if (!validTabs.length) return;
+
+  const urls = validTabs.map(t => t.url);
+  const win  = await chrome.windows.create({ url: urls });
+  if (!s.groups?.length || !win.tabs?.length) return;
+
+  const groupIdMap = {};
+  for (let i = 0; i < validTabs.length; i++) {
+    const gi    = validTabs[i].groupIndex;
+    const tabId = win.tabs[i]?.id;
+    if (gi == null || gi === -1 || !tabId) continue;
+
+    try {
+      if (groupIdMap[gi] == null) {
+        const cgid = await chrome.tabs.group({ tabIds: [tabId], createProperties: { windowId: win.id } });
+        await chrome.tabGroups.update(cgid, {
+          title: s.groups[gi]?.title || '',
+          color: s.groups[gi]?.color || 'grey'
+        });
+        groupIdMap[gi] = cgid;
+      } else {
+        await chrome.tabs.group({ tabIds: [tabId], groupId: groupIdMap[gi] });
+      }
+    } catch {}
+  }
 }
 
 // ── Events ────────────────────────────────────────────────────────────────────
@@ -252,18 +316,26 @@ function bindEvents() {
     render();
   });
 
-  // Session list — clicks + keyboard
+  // Session list — delegation
   const list = $('sessionsList');
   list.addEventListener('click', e => {
+    // Individual favicon click → open just that tab
+    const fav = e.target.closest('.fav');
+    if (fav?.dataset.url) {
+      e.stopPropagation();
+      chrome.tabs.create({ url: fav.dataset.url });
+      return;
+    }
     const btn  = e.target.closest('[data-action]');
     if (btn) { e.stopPropagation(); handleAction(btn.dataset.action, btn.dataset.id, btn); return; }
     const item = e.target.closest('.session-item');
     if (item) handleAction('restore-new', item.dataset.id, item);
   });
+
   list.addEventListener('keydown', e => {
     const item = e.target.closest('.session-item');
     if (!item) return;
-    if (e.key === 'Enter')  { handleAction('restore-new', item.dataset.id, item); return; }
+    if (e.key === 'Enter')     { handleAction('restore-new', item.dataset.id, item); return; }
     if (e.key === 'ArrowDown') { e.preventDefault(); item.nextElementSibling?.focus(); }
     if (e.key === 'ArrowUp')   { e.preventDefault(); item.previousElementSibling?.focus(); }
     if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); deleteWithUndo(item.dataset.id); }
@@ -294,9 +366,7 @@ function bindEvents() {
     await setSessionTags(activeTagSessionId, tags);
     allSessions = await getSessions();
     e.target.value = '';
-    render();
-    renderTagFilter();
-    renderTagPopover(activeTagSessionId);
+    render(); renderTagFilter(); renderTagPopover(activeTagSessionId);
   });
 
   // Smart Group
@@ -319,9 +389,9 @@ async function openNameBar() {
 
   if (!(await getApiKey())) return;
 
-  input.disabled = true; input.placeholder = 'Getting AI name…';
-  const tabs      = await chrome.tabs.query({ currentWindow: true });
-  const saveable  = tabs.filter(t => isValidUrl(t.url));
+  input.disabled = true; input.placeholder = 'AI is naming…';
+  const tabs       = await chrome.tabs.query({ currentWindow: true });
+  const saveable   = tabs.filter(t => isValidUrl(t.url));
   const suggestion = await suggestSessionName(saveable);
   input.disabled = false; input.placeholder = 'Name this session…';
   if (suggestion) { input.value = suggestion; badge.classList.remove('hidden'); input.select(); }
@@ -341,17 +411,19 @@ async function doSave() {
   const tabs    = await chrome.tabs.query({ currentWindow: true });
   const saveable = tabs.filter(t => isValidUrl(t.url));
   if (!saveable.length) { showToast('No saveable tabs in this window'); return; }
-  const session = await createSession(name, saveable, aiNamed);
+
+  const { tabsWithGroups, groups } = await captureTabGroups(saveable);
+  const session = await createSession(name, tabsWithGroups, aiNamed, groups);
   allSessions   = await getSessions();
   closeNameBar(); render();
-  showToast(`Saved "${session.name}" · ${saveable.length} tabs`);
+  showToast(`Saved "${session.name}" · ${session.tabs.length} tabs`);
 }
 
 // ── Session actions ───────────────────────────────────────────────────────────
 async function handleAction(action, id, el) {
   if (action === 'restore-new') {
     const s = allSessions.find(s => s.id === id);
-    if (s) await chrome.windows.create({ url: s.tabs.map(t => t.url).filter(Boolean) });
+    if (s) await restoreWithGroups(s);
     return;
   }
   if (action === 'tag')  { showTagPopover(id, el); return; }
@@ -362,11 +434,19 @@ async function handleMenuAction(action, id) {
   const s = allSessions.find(s => s.id === id);
   if (!s) return;
 
-  if (action === 'restore-new') { await chrome.windows.create({ url: s.tabs.map(t => t.url).filter(Boolean) }); return; }
+  if (action === 'restore-new') { await restoreWithGroups(s); return; }
 
   if (action === 'restore-here') {
     const win = await chrome.windows.getCurrent();
     for (const t of s.tabs) await chrome.tabs.create({ url: t.url, windowId: win.id });
+    return;
+  }
+
+  if (action === 'duplicate') {
+    await duplicateSession(id);
+    allSessions = await getSessions();
+    render();
+    showToast(`Duplicated "${truncate(s.name, 24)}"`);
     return;
   }
 
@@ -435,12 +515,12 @@ function showTagPopover(id, anchor) {
 }
 
 function renderTagPopover(id) {
-  const s    = allSessions.find(s => s.id === id);
+  const s     = allSessions.find(s => s.id === id);
   const stags = s?.tags || [];
   const list  = $('tagPopList');
 
   if (!Object.keys(allTags).length) {
-    list.innerHTML = '<span class="no-tags-hint">Type a name below to create your first tag</span>';
+    list.innerHTML = '<span class="no-tags-hint">Type below to create your first tag</span>';
     return;
   }
 
@@ -497,12 +577,10 @@ async function doSmartGroup() {
 
   const tabs     = await chrome.tabs.query({ currentWindow: true });
   const saveable = tabs.filter(t => isValidUrl(t.url));
-
   if (saveable.length < 2) { closeGroupOverlay(); showToast('Not enough tabs to group'); return; }
 
   const result = await suggestTabGroups(saveable);
   $('groupLoading').classList.add('hidden');
-
   if (!result?.groups?.length) { closeGroupOverlay(); showToast('AI grouping failed — try again'); return; }
 
   proposedGroups = result.groups

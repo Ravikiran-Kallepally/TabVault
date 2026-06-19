@@ -9,9 +9,8 @@ chrome.runtime.onInstalled.addListener(async () => {
   await refreshBadge();
 });
 
-// ── Startup (Chrome launched fresh) ───────────────────────────────────────────
+// ── Startup ───────────────────────────────────────────────────────────────────
 chrome.runtime.onStartup.addListener(async () => {
-  // Flag for popup to offer crash/session recovery
   chrome.storage.local.set({ tabvault_startup: Date.now() });
   chrome.alarms.create('auto-snapshot', { delayInMinutes: 1, periodInMinutes: 30 });
   await refreshBadge();
@@ -23,7 +22,8 @@ chrome.commands.onCommand.addListener(async (command) => {
   const tabs = await chrome.tabs.query({ currentWindow: true });
   const saveable = tabs.filter(t => isValidUrl(t.url));
   if (!saveable.length) return;
-  await createSession('', saveable);
+  const { tabsWithGroups, groups } = await captureTabGroups(saveable);
+  await createSession('', tabsWithGroups, false, groups);
 });
 
 // ── Context menu ──────────────────────────────────────────────────────────────
@@ -33,11 +33,13 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   } else if (info.menuItemId === 'save-window') {
     const tabs = await chrome.tabs.query({ windowId: tab.windowId });
     const saveable = tabs.filter(t => isValidUrl(t.url));
-    if (saveable.length) await createSession('', saveable);
+    if (!saveable.length) return;
+    const { tabsWithGroups, groups } = await captureTabGroups(saveable);
+    await createSession('', tabsWithGroups, false, groups);
   }
 });
 
-// ── Badge count ───────────────────────────────────────────────────────────────
+// ── Badge ─────────────────────────────────────────────────────────────────────
 async function refreshBadge() {
   const sessions = await getSessions();
   const n = sessions.length;
@@ -61,14 +63,41 @@ chrome.runtime.onSuspend.addListener(async () => {
 async function takeSnapshot() {
   try {
     const windows = await chrome.windows.getAll({ populate: true });
-    const data = windows
-      .filter(w => w.type === 'normal')
-      .map(w => ({
-        tabs: w.tabs
-          .filter(t => isValidUrl(t.url))
-          .map(t => ({ url: t.url, title: t.title || t.url, favIconUrl: t.favIconUrl || '' }))
-      }))
-      .filter(w => w.tabs.length > 0);
-    if (data.length) await saveSnapshot(data);
-  } catch { /* silent — service worker may lack window access in some states */ }
+    const data = await Promise.all(
+      windows
+        .filter(w => w.type === 'normal')
+        .map(async w => {
+          const tabs = w.tabs.filter(t => isValidUrl(t.url));
+          const { tabsWithGroups, groups } = await captureTabGroups(tabs);
+          return { tabs: tabsWithGroups, groups };
+        })
+    );
+    const valid = data.filter(w => w.tabs.length > 0);
+    if (valid.length) await saveSnapshot(valid);
+  } catch { /* silent */ }
+}
+
+// ── Tab Group capture ─────────────────────────────────────────────────────────
+async function captureTabGroups(tabs) {
+  const groupIndexMap = {};
+  const groups = [];
+
+  for (const tab of tabs) {
+    if (tab.groupId != null && tab.groupId !== -1 && groupIndexMap[tab.groupId] == null) {
+      try {
+        const g = await chrome.tabGroups.get(tab.groupId);
+        groupIndexMap[tab.groupId] = groups.length;
+        groups.push({ title: g.title || '', color: g.color });
+      } catch {}
+    }
+  }
+
+  const tabsWithGroups = tabs.map(t => ({
+    url: t.url,
+    title: t.title || '',
+    favIconUrl: t.favIconUrl || '',
+    groupIndex: (t.groupId != null && t.groupId !== -1) ? (groupIndexMap[t.groupId] ?? -1) : -1
+  }));
+
+  return { tabsWithGroups, groups };
 }

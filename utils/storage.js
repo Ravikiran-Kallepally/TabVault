@@ -17,7 +17,15 @@ export async function getSession(id) {
   return sessions.find(s => s.id === id) || null;
 }
 
-export async function createSession(name, tabs, aiNamed = false) {
+export async function createSession(name, tabs, aiNamed = false, groups = []) {
+  // Deduplicate by URL
+  const seen = new Set();
+  const uniqueTabs = tabs.filter(t => {
+    if (!t.url || seen.has(t.url)) return false;
+    seen.add(t.url);
+    return true;
+  });
+
   const sessions = await getSessions();
   const session = {
     id: generateId(),
@@ -28,16 +36,35 @@ export async function createSession(name, tabs, aiNamed = false) {
     pinned: false,
     tags: [],
     notes: '',
-    tabs: tabs.map(t => ({
+    groups: groups || [],
+    tabs: uniqueTabs.map(t => ({
       url: t.url,
       title: t.title || t.url,
       favIconUrl: t.favIconUrl || '',
-      pinned: t.pinned || false
+      groupIndex: t.groupIndex ?? -1
     }))
   };
   sessions.unshift(session);
   await chrome.storage.local.set({ [KEY]: sessions });
   return session;
+}
+
+export async function duplicateSession(id) {
+  const sessions = await getSessions();
+  const s = sessions.find(s => s.id === id);
+  if (!s) return null;
+  const copy = {
+    ...s,
+    id: generateId(),
+    name: s.name + ' (copy)',
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+    pinned: false
+  };
+  const idx = sessions.indexOf(s);
+  sessions.splice(idx + 1, 0, copy);
+  await chrome.storage.local.set({ [KEY]: sessions });
+  return copy;
 }
 
 export async function renameSession(id, name) {

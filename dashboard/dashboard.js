@@ -1,5 +1,6 @@
 import {
-  getSessions, createSession, deleteSession, renameSession, pinSession, exportSessions, importSessions,
+  getSessions, createSession, duplicateSession, deleteSession, renameSession, pinSession,
+  exportSessions, importSessions,
   updateNotes, setSessionTags, getTags, upsertTag, removeTagGlobal,
   getApiKey, setApiKey
 } from '../utils/storage.js';
@@ -161,7 +162,7 @@ function cardHTML(s) {
     ${tagsHTML ? `<div class="card-tags">${tagsHTML}</div>` : ''}
     <div class="card-actions">
       <button class="card-btn" data-id="${s.id}" data-action="restore">Open</button>
-      <button class="card-btn" data-id="${s.id}" data-action="pin">${s.pinned ? 'Unpin' : 'Pin'}</button>
+      <button class="card-btn" data-id="${s.id}" data-action="duplicate">Copy</button>
       <button class="card-btn del" data-id="${s.id}" data-action="delete">Delete</button>
     </div>
   </div>`;
@@ -239,7 +240,21 @@ function showDetail(id) {
   // Tags on detail
   renderDetailTags(s);
 
-  $('detailRestore').onclick = () => chrome.windows.create({ url: s.tabs.map(t => t.url).filter(Boolean) });
+  $('detailRestore').onclick = () => restoreWithGroups(s);
+
+  // Tab group chips
+  const GC = { grey:'#5f6368',blue:'#1a73e8',red:'#d93025',yellow:'#f9ab00',green:'#34a853',pink:'#e91e8c',purple:'#9c27b0',cyan:'#00bcd4',orange:'#f57c00' };
+  const dg = $('detailGroups');
+  if (s.groups?.length) {
+    dg.classList.remove('hidden');
+    dg.innerHTML = s.groups.map(g =>
+      `<span class="detail-group-chip" style="--gc:${GC[g.color]||'#888'}">
+        <span class="detail-group-dot"></span>${escapeHtml(g.title || g.color)}
+      </span>`
+    ).join('');
+  } else {
+    dg.classList.add('hidden');
+  }
 
   $('sessionNotes').value = s.notes || '';
   clearTimeout(notesTimer);
@@ -346,6 +361,60 @@ function showWindowDetail(winId) {
   $('windowTabsList').querySelectorAll('.tab-item').forEach(el => {
     el.addEventListener('click', () => chrome.tabs.create({ url: el.dataset.url }));
   });
+}
+
+// ── Tab group restore ─────────────────────────────────────────────────────────
+async function restoreWithGroups(s) {
+  const validTabs = s.tabs.filter(t => t.url && isValidUrl(t.url));
+  if (!validTabs.length) return;
+  const urls = validTabs.map(t => t.url);
+  const win  = await chrome.windows.create({ url: urls });
+  if (!s.groups?.length || !win.tabs?.length) return;
+  const groupIdMap = {};
+  for (let i = 0; i < validTabs.length; i++) {
+    const gi    = validTabs[i].groupIndex;
+    const tabId = win.tabs[i]?.id;
+    if (gi == null || gi === -1 || !tabId) continue;
+    try {
+      if (groupIdMap[gi] == null) {
+        const cgid = await chrome.tabs.group({ tabIds: [tabId], createProperties: { windowId: win.id } });
+        await chrome.tabGroups.update(cgid, { title: s.groups[gi]?.title || '', color: s.groups[gi]?.color || 'grey' });
+        groupIdMap[gi] = cgid;
+      } else {
+        await chrome.tabs.group({ tabIds: [tabId], groupId: groupIdMap[gi] });
+      }
+    } catch {}
+  }
+}
+
+// ── OneTab import ─────────────────────────────────────────────────────────────
+function parseOneTab(text) {
+  const sessions = [];
+  const blocks   = text.trim().split(/\n\s*\n+/);
+  for (const block of blocks) {
+    const lines = block.trim().split('\n').filter(l => l.trim());
+    const tabs  = [];
+    for (const line of lines) {
+      let url, title;
+      const trimmed = line.trim();
+      if (trimmed.includes(' | ')) {
+        const idx = trimmed.indexOf(' | ');
+        url   = trimmed.slice(0, idx).trim();
+        title = trimmed.slice(idx + 3).trim();
+      } else if (trimmed.includes('\t')) {
+        [url, title] = trimmed.split('\t');
+      } else {
+        url = trimmed;
+      }
+      url   = url?.trim();
+      title = (title || url || '').trim();
+      if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+        tabs.push({ url, title, favIconUrl: '' });
+      }
+    }
+    if (tabs.length) sessions.push(tabs);
+  }
+  return sessions;
 }
 
 // ── Share encode / decode ─────────────────────────────────────────────────────
@@ -457,6 +526,17 @@ function bindEvents() {
     }, 800);
   });
 
+  // Duplicate
+  $('duplicateBtn').addEventListener('click', async () => {
+    if (!selectedId) return;
+    const s = allSessions.find(s => s.id === selectedId);
+    if (!s) return;
+    await duplicateSession(selectedId);
+    allSessions = await getSessions();
+    updateStats(); renderTagSidebar(); render();
+    showToast(`Duplicated "${truncate(s.name, 28)}"`);
+  });
+
   // Share
   $('shareBtn').addEventListener('click', () => {
     const panel = $('sharePanel');
@@ -473,9 +553,10 @@ function bindEvents() {
     showToast('Share code copied');
   });
 
-  // Import code
+  // Import share code
   $('importCodeBtn').addEventListener('click', () => {
     $('importCodeWrap').classList.toggle('hidden');
+    $('importOneTabWrap').classList.add('hidden');
     if (!$('importCodeWrap').classList.contains('hidden')) $('importCodeInput').focus();
   });
   $('importCodeSubmit').addEventListener('click', async () => {
@@ -488,6 +569,25 @@ function bindEvents() {
     $('importCodeInput').value = '';
     $('importCodeWrap').classList.add('hidden');
     showToast(`Imported "${data.name}"`);
+  });
+
+  // OneTab import
+  $('importOneTabBtn').addEventListener('click', () => {
+    $('importOneTabWrap').classList.toggle('hidden');
+    $('importCodeWrap').classList.add('hidden');
+    if (!$('importOneTabWrap').classList.contains('hidden')) $('importOneTabInput').focus();
+  });
+  $('importOneTabSubmit').addEventListener('click', async () => {
+    const text = $('importOneTabInput').value.trim();
+    if (!text) { showToast('Paste your OneTab export first'); return; }
+    const groups = parseOneTab(text);
+    if (!groups.length) { showToast('No valid URLs found'); return; }
+    for (const tabs of groups) await createSession('', tabs);
+    allSessions = await getSessions();
+    updateStats(); renderTagSidebar(); render();
+    $('importOneTabInput').value = '';
+    $('importOneTabWrap').classList.add('hidden');
+    showToast(`Imported ${groups.length} session${groups.length !== 1 ? 's' : ''} from OneTab`);
   });
 
   // Export / Import file
@@ -545,8 +645,12 @@ async function handleCardAction(action, id) {
   const s = allSessions.find(s => s.id === id);
   if (!s) return;
 
-  if (action === 'restore') {
-    await chrome.windows.create({ url: s.tabs.map(t => t.url).filter(Boolean) });
+  if (action === 'restore') { await restoreWithGroups(s); return; }
+  if (action === 'duplicate') {
+    await duplicateSession(id);
+    allSessions = await getSessions();
+    updateStats(); renderTagSidebar(); render();
+    showToast(`Duplicated "${truncate(s.name, 28)}"`);
     return;
   }
   if (action === 'pin') {
