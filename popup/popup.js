@@ -1,11 +1,10 @@
 import {
   getSessions, createSession, deleteSession, renameSession, pinSession, duplicateSession,
   getTags, upsertTag, setSessionTags,
-  getSnapshots, getApiKey,
+  getSnapshots,
   hasOnboarded, markOnboarded
 } from '../utils/storage.js';
 import { timeAgo, getDomain, getFavLetter, domainColor, truncate, isValidUrl, escapeHtml } from '../utils/helpers.js';
-import { suggestSessionName, suggestTabGroups } from '../utils/ai.js';
 
 // ── State ─────────────────────────────────────────────────────────────────────
 let allSessions        = [];
@@ -18,7 +17,6 @@ let pendingDelete      = null;
 let deleteTimer        = null;
 let toastTimer         = null;
 let obStep             = 0;
-let proposedGroups     = [];
 let recoverySnapshot   = null;
 
 const $ = id => document.getElementById(id);
@@ -46,7 +44,7 @@ async function loadAll() {
 }
 
 // ── Onboarding ────────────────────────────────────────────────────────────────
-const OB_TOTAL = 4;
+const OB_TOTAL = 3;
 
 function showOnboarding() {
   obStep = 0;
@@ -164,10 +162,8 @@ function renderTagFilter() {
 }
 
 function sessionHTML(s, matchCount, query) {
-  // Primary color from first tab — gives each session a unique identity
-  const sc = s.tabs.length ? domainColor(s.tabs[0].url) : '#6366f1';
+  const sc = s.tabs.length ? domainColor(s.tabs[0].url) : '#1a73e8';
 
-  // Favicon strip: fixed 5, no wrapping, fade-right handled in CSS
   const favSlice = s.tabs.slice(0, 5);
   const overflow = s.tabs.length - 5;
   const favsHTML = favSlice.map(t => {
@@ -180,12 +176,11 @@ function sessionHTML(s, matchCount, query) {
     return `<div class="fav" data-url="${escapeHtml(t.url)}" title="${escapeHtml(t.title)}" style="background:${color}">${letter}</div>`;
   }).join('') + (overflow > 0 ? `<div class="fav-more">+${overflow}</div>` : '');
 
-  const aiDot    = s.aiNamed ? `<span class="ai-dot" title="AI-named">✦</span>` : '';
   const pinnedDot = s.pinned ? `<span class="pin-indicator" title="Pinned">📌</span>` : '';
 
   const tagsHTML = (s.tags || []).length
     ? (s.tags).slice(0, 3).map(tag => {
-        const c = allTags[tag] || '#6366f1';
+        const c = allTags[tag] || '#1a73e8';
         return `<span class="tag-chip" style="--tc:${c}">${escapeHtml(tag)}</span>`;
       }).join('') + (s.tags.length > 3 ? `<span class="tag-chip tag-more">+${s.tags.length - 3}</span>` : '')
     : '';
@@ -202,7 +197,7 @@ function sessionHTML(s, matchCount, query) {
 
   return `<div class="session-item ${s.pinned ? 'pinned' : ''}" data-id="${s.id}" tabindex="0" style="--sc:${sc}">
     <div class="item-top">
-      <span class="session-name">${highlight(truncate(s.name, 36), query)}${aiDot}${pinnedDot}</span>
+      <span class="session-name">${highlight(truncate(s.name, 36), query)}${pinnedDot}</span>
       <div class="session-actions">
         <button class="action-btn restore" data-id="${s.id}" data-action="restore-new" title="Open">↗</button>
         <button class="action-btn" data-id="${s.id}" data-action="tag" title="Tags">🏷</button>
@@ -329,7 +324,6 @@ function bindEvents() {
   // Session list — delegation
   const list = $('sessionsList');
   list.addEventListener('click', e => {
-    // Individual favicon click → open just that tab
     const fav = e.target.closest('.fav');
     if (fav?.dataset.url) {
       e.stopPropagation();
@@ -379,13 +373,7 @@ function bindEvents() {
     render(); renderTagFilter(); renderTagPopover(activeTagSessionId);
   });
 
-  // Smart Group
-  $('smartGroupBtn').addEventListener('click', doSmartGroup);
-  $('closeGroupOverlay').addEventListener('click', closeGroupOverlay);
-  $('cancelGroupSave').addEventListener('click', closeGroupOverlay);
-  $('confirmGroupSave').addEventListener('click', saveAllGroups);
-
-  // Live auto-refresh when another context (background, dashboard) mutates storage
+  // Live auto-refresh
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area !== 'local') return;
     if (changes.tabvault_sessions) {
@@ -400,50 +388,34 @@ function bindEvents() {
   });
 }
 
-// ── Name bar / AI naming ──────────────────────────────────────────────────────
-async function openNameBar() {
+// ── Name bar ──────────────────────────────────────────────────────────────────
+function openNameBar() {
   const bar   = $('nameBar');
   const input = $('nameInput');
-  const badge = $('aiBadge');
   bar.classList.remove('hidden');
-  input.value = ''; input.disabled = false;
-  badge.classList.add('hidden');
+  input.value = '';
   input.placeholder = 'Name this session…';
-  input.focus();
-
-  if (!(await getApiKey())) return;
-
-  input.disabled = true; input.placeholder = 'AI is naming…';
-  const tabs       = await chrome.tabs.query({ currentWindow: true });
-  const saveable   = tabs.filter(t => isValidUrl(t.url));
-  const suggestion = await suggestSessionName(saveable);
-  input.disabled = false; input.placeholder = 'Name this session…';
-  if (suggestion) { input.value = suggestion; badge.classList.remove('hidden'); input.select(); }
   input.focus();
 }
 
 function closeNameBar() {
   $('nameBar').classList.add('hidden');
-  $('aiBadge').classList.add('hidden');
-  $('nameInput').disabled    = false;
+  $('nameInput').value = '';
   $('nameInput').placeholder = 'Name this session…';
 }
 
 async function doSave(closeAfter = false) {
-  const name    = $('nameInput').value.trim();
-  const aiNamed = !$('aiBadge').classList.contains('hidden') && name.length > 0;
-  const tabs    = await chrome.tabs.query({ currentWindow: true });
+  const name     = $('nameInput').value.trim();
+  const tabs     = await chrome.tabs.query({ currentWindow: true });
   const saveable = tabs.filter(t => isValidUrl(t.url));
   if (!saveable.length) { showToast('No saveable tabs in this window'); return; }
 
   const { tabsWithGroups, groups } = await captureTabGroups(saveable);
-  const session = await createSession(name, tabsWithGroups, aiNamed, groups);
+  const session = await createSession(name, tabsWithGroups, false, groups);
 
   if (closeAfter) {
-    // Close all non-pinned tabs — pinned tabs are intentionally left open
     const tabIds = saveable.filter(t => !t.pinned).map(t => t.id);
     if (tabIds.length) await chrome.tabs.remove(tabIds);
-    // Toast shown before close (window may close before it renders)
     showToast(`Saved & closed ${tabIds.length} tab${tabIds.length !== 1 ? 's' : ''}`);
     return;
   }
@@ -599,72 +571,6 @@ function showMenu(id, anchor) {
 }
 
 function hideMenu() { $('contextMenu').classList.add('hidden'); activeMenuId = null; }
-
-// ── Smart Group ───────────────────────────────────────────────────────────────
-async function doSmartGroup() {
-  if (!(await getApiKey())) { showToast('Add your Claude API key in Dashboard → Settings'); return; }
-
-  $('groupOverlay').classList.remove('hidden');
-  $('groupLoading').classList.remove('hidden');
-  $('groupResults').classList.add('hidden');
-  $('groupFooter').classList.add('hidden');
-
-  const tabs     = await chrome.tabs.query({ currentWindow: true });
-  const saveable = tabs.filter(t => isValidUrl(t.url));
-  if (saveable.length < 2) { closeGroupOverlay(); showToast('Not enough tabs to group'); return; }
-
-  const result = await suggestTabGroups(saveable);
-  $('groupLoading').classList.add('hidden');
-  if (!result?.groups?.length) { closeGroupOverlay(); showToast('AI grouping failed — try again'); return; }
-
-  proposedGroups = result.groups
-    .filter(g => g.indices?.length)
-    .map(g => ({ name: g.name, tabs: g.indices.map(i => saveable[i]).filter(Boolean) }));
-
-  renderGroupResults();
-  $('groupResults').classList.remove('hidden');
-  $('groupFooter').classList.remove('hidden');
-}
-
-function renderGroupResults() {
-  $('groupResults').innerHTML = proposedGroups.map((g, gi) => {
-    const favs = g.tabs.slice(0, 5).map(t => {
-      if (t.favIconUrl?.startsWith('http')) {
-        return `<div class="gfav" data-url="${escapeHtml(t.url)}" style="background:${domainColor(t.url)}">
-          <img src="${escapeHtml(t.favIconUrl)}" alt="" loading="lazy" /></div>`;
-      }
-      return `<div class="gfav" style="background:${domainColor(t.url)}">${getFavLetter(t.url)}</div>`;
-    }).join('');
-    return `<div class="group-card">
-      <input class="group-name-input" data-gi="${gi}" value="${escapeHtml(g.name)}" maxlength="60" />
-      <div class="group-favs">${favs}</div>
-      <div class="group-tab-count">${g.tabs.length} tab${g.tabs.length !== 1 ? 's' : ''}</div>
-    </div>`;
-  }).join('');
-
-  $('groupResults').querySelectorAll('.group-name-input').forEach(inp => {
-    inp.addEventListener('input', e => { proposedGroups[+e.target.dataset.gi].name = e.target.value; });
-  });
-  $('groupResults').querySelectorAll('.gfav img').forEach(img => {
-    img.addEventListener('error', () => {
-      const fav = img.closest('.gfav');
-      fav.style.background = domainColor(fav.dataset.url || '');
-      fav.textContent      = getFavLetter(fav.dataset.url || '');
-    });
-  });
-}
-
-async function saveAllGroups() {
-  let saved = 0;
-  for (const g of proposedGroups) {
-    if (g.tabs.length) { await createSession(g.name, g.tabs, true); saved++; }
-  }
-  allSessions = await getSessions();
-  closeGroupOverlay(); render();
-  showToast(`Saved ${saved} group${saved !== 1 ? 's' : ''} as sessions`);
-}
-
-function closeGroupOverlay() { $('groupOverlay').classList.add('hidden'); proposedGroups = []; }
 
 // ── Toast ─────────────────────────────────────────────────────────────────────
 function showToast(msg, onUndo) {

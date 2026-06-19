@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "TabVault – Session Manager",
   "short_name": "TabVault",
-  "version": "0.5.0",
+  "version": "1.0.0",
   "description": "Save, search and restore browser sessions with AI. Local-first. No account needed.",
   "permissions": ["tabs", "storage", "windows", "alarms", "contextMenus", "tabGroups"],
   "host_permissions": ["https://api.anthropic.com/*"],
