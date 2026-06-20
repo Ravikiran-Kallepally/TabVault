@@ -722,11 +722,27 @@ function bindEvents() {
       updateStats();
       renderTagSidebar();
       render();
+      // Sync detail panel without resetting notes textarea
+      if (selectedId) {
+        const s = allSessions.find(s => s.id === selectedId);
+        if (s) {
+          $('detailTitle').textContent = s.name;
+          renderDetailTags(s);
+        } else {
+          selectedId = null;
+          $('detailContent').classList.add('hidden');
+          $('detailEmpty').style.display = 'flex';
+        }
+      }
     }
     if (changes.tabvault_tags) {
       allTags = changes.tabvault_tags.newValue || {};
       renderTagSidebar();
       render();
+      if (selectedId) {
+        const s = allSessions.find(s => s.id === selectedId);
+        if (s) renderDetailTags(s);
+      }
     }
   });
 }

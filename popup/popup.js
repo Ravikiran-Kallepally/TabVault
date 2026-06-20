@@ -397,6 +397,9 @@ function bindEvents() {
   // Live auto-refresh
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area !== 'local') return;
+    if (changes.tabvault_theme) {
+      document.documentElement.setAttribute('data-theme', changes.tabvault_theme.newValue ?? 'dark');
+    }
     if (changes.tabvault_sessions) {
       allSessions = changes.tabvault_sessions.newValue || [];
       render();
