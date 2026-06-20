@@ -171,7 +171,7 @@ function renderTagFilter() {
   if (!names.length) { row.classList.add('hidden'); return; }
 
   row.classList.remove('hidden');
-  row.innerHTML = (activeTag ? `<button class="tf-chip tf-all" data-tag="">All</button>` : '') +
+  row.innerHTML = `<button class="tf-chip tf-all ${!activeTag ? 'active' : ''}" data-tag="">All</button>` +
     names.map(name => {
       const color = allTags[name];
       return `<button class="tf-chip ${activeTag === name ? 'active' : ''}"
@@ -356,23 +356,39 @@ function bindEvents() {
     if (item) handleAction('restore-new', item.dataset.id, item);
   });
 
-  list.addEventListener('keydown', e => {
-    if (e.target.classList.contains('rename-input')) return; // let rename handle its own keys
-    const item = e.target.closest('.session-item');
-    if (!item) return;
-    if (e.key === 'Enter')     { handleAction('restore-new', item.dataset.id, item); return; }
-    if (e.key === 'ArrowDown') { e.preventDefault(); item.nextElementSibling?.focus(); }
-    if (e.key === 'ArrowUp')   { e.preventDefault(); item.previousElementSibling?.focus(); }
-    if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); deleteWithUndo(item.dataset.id); }
-  });
-
   // Context menu
   document.addEventListener('click', e => {
     if (!$('contextMenu').contains(e.target)) hideMenu();
     if (!$('tagPopover').contains(e.target) && !e.target.closest('[data-action="tag"]')) hideTagPopover();
   });
+
+  // Global keyboard handler: Escape + session list navigation from any focus state
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') { hideMenu(); hideTagPopover(); }
+    if (e.key === 'Escape') { hideMenu(); hideTagPopover(); return; }
+
+    // Let text inputs handle their own keys
+    const focused = document.activeElement;
+    if (focused?.tagName === 'INPUT' || focused?.tagName === 'TEXTAREA') return;
+
+    const items = [...$('sessionsList').querySelectorAll('.session-item')];
+    if (!items.length) return;
+
+    const current = focused?.closest?.('.session-item') ?? null;
+    const idx     = current ? items.indexOf(current) : -1;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      (items[idx + 1] ?? items[0]).focus();
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      (items[idx > 0 ? idx - 1 : items.length - 1]).focus();
+    } else if (e.key === 'Enter' && current) {
+      e.preventDefault();
+      handleAction('restore-new', current.dataset.id, current);
+    } else if ((e.key === 'Delete' || e.key === 'Backspace') && current) {
+      e.preventDefault();
+      deleteWithUndo(current.dataset.id);
+    }
   });
   $('contextMenu').addEventListener('click', e => {
     const btn = e.target.closest('[data-action]');
