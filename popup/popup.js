@@ -18,6 +18,7 @@ let deleteTimer        = null;
 let toastTimer         = null;
 let obStep             = 0;
 let recoverySnapshot   = null;
+let searchTimer        = null;
 
 const $ = id => document.getElementById(id);
 
@@ -276,7 +277,7 @@ async function restoreWithGroups(s) {
 
   const groupIdMap = {};
   for (let i = 0; i < validTabs.length; i++) {
-    const gi    = validTabs[i].groupIndex;
+    const gi    = validTabs[i].groupIndex ?? -1;
     const tabId = win.tabs[i]?.id;
     if (gi == null || gi === -1 || !tabId) continue;
 
@@ -321,7 +322,8 @@ function bindEvents() {
   $('search').addEventListener('input', e => {
     searchQuery = e.target.value;
     $('clearSearch').classList.toggle('hidden', !searchQuery);
-    render();
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(render, 150);
   });
   $('clearSearch').addEventListener('click', () => {
     $('search').value = ''; searchQuery = '';

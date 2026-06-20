@@ -95,7 +95,7 @@ async function captureTabGroups(tabs) {
   const tabsWithGroups = tabs.map(t => ({
     url: t.url,
     title: t.title || '',
-    favIconUrl: t.favIconUrl || '',
+    favIconUrl: t.favIconUrl?.startsWith('http') ? t.favIconUrl : '',
     groupIndex: (t.groupId != null && t.groupId !== -1) ? (groupIndexMap[t.groupId] ?? -1) : -1
   }));
 

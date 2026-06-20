@@ -19,6 +19,7 @@ let pendingDelete = null;
 let deleteTimer   = null;
 let toastTimer    = null;
 let notesTimer    = null;
+let searchTimer   = null;
 
 const $ = id => document.getElementById(id);
 
@@ -377,7 +378,7 @@ async function restoreWithGroups(s) {
   if (!s.groups?.length || !win.tabs?.length) return;
   const groupIdMap = {};
   for (let i = 0; i < validTabs.length; i++) {
-    const gi    = validTabs[i].groupIndex;
+    const gi    = validTabs[i].groupIndex ?? -1;
     const tabId = win.tabs[i]?.id;
     if (gi == null || gi === -1 || !tabId) continue;
     try {
@@ -439,7 +440,11 @@ function decodeSession(code) {
 // ── Events ────────────────────────────────────────────────────────────────────
 function bindEvents() {
   // Search
-  $('search').addEventListener('input', e => { searchQuery = e.target.value; render(); });
+  $('search').addEventListener('input', e => {
+    searchQuery = e.target.value;
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(render, 150);
+  });
   $('sortSelect').addEventListener('change', e => { sortMode = e.target.value; render(); });
 
   // Filter nav

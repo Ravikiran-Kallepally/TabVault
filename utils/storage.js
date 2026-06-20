@@ -37,12 +37,15 @@ export async function createSession(name, tabs, aiNamed = false, groups = []) {
     tags: [],
     notes: '',
     groups: groups || [],
-    tabs: uniqueTabs.map(t => ({
-      url: t.url,
-      title: t.title || t.url,
-      favIconUrl: t.favIconUrl || '',
-      groupIndex: t.groupIndex ?? -1
-    }))
+    tabs: uniqueTabs.map(t => {
+      const tab = {
+        url: t.url,
+        title: (t.title || t.url).slice(0, 200),
+        favIconUrl: t.favIconUrl?.startsWith('http') ? t.favIconUrl : '',
+      };
+      if ((t.groupIndex ?? -1) !== -1) tab.groupIndex = t.groupIndex;
+      return tab;
+    })
   };
   sessions.unshift(session);
   await chrome.storage.local.set({ [KEY]: sessions });
