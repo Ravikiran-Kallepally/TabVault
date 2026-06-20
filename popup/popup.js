@@ -1,5 +1,5 @@
 import {
-  getSessions, createSession, deleteSession, renameSession, pinSession, duplicateSession,
+  getSessions, createSession, deleteSession, restoreSession, renameSession, pinSession, duplicateSession,
   getTags, upsertTag, setSessionTags,
   getSnapshots,
   hasOnboarded, markOnboarded
@@ -505,20 +505,29 @@ async function handleMenuAction(action, id) {
 }
 
 // ── Undo delete ───────────────────────────────────────────────────────────────
-function deleteWithUndo(id) {
-  if (pendingDelete) { clearTimeout(deleteTimer); deleteSession(pendingDelete.id); }
-  pendingDelete = allSessions.find(s => s.id === id);
-  if (!pendingDelete) return;
-  allSessions = allSessions.filter(s => s.id !== id);
+async function deleteWithUndo(id) {
+  clearTimeout(deleteTimer);
+  pendingDelete = null;
+
+  const session = allSessions.find(s => s.id === id);
+  if (!session) return;
+
+  await deleteSession(id);                          // commit to storage immediately
+  pendingDelete   = session;
+  allSessions     = allSessions.filter(s => s.id !== id);
   render();
-  showToast(`"${truncate(pendingDelete.name, 22)}" deleted`, async () => {
+
+  showToast(`"${truncate(session.name, 22)}" deleted`, async () => {
     clearTimeout(deleteTimer);
-    allSessions = await getSessions();
-    pendingDelete = null; render();
+    if (pendingDelete) {
+      await restoreSession(pendingDelete);
+      allSessions   = await getSessions();
+      pendingDelete = null;
+      render();
+    }
   });
-  deleteTimer = setTimeout(async () => {
-    if (pendingDelete) { await deleteSession(pendingDelete.id); pendingDelete = null; }
-  }, 5000);
+
+  deleteTimer = setTimeout(() => { pendingDelete = null; }, 5000);
 }
 
 // ── Tags ──────────────────────────────────────────────────────────────────────

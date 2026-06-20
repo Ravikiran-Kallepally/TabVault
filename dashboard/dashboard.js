@@ -1,5 +1,5 @@
 import {
-  getSessions, createSession, duplicateSession, deleteSession, renameSession, pinSession,
+  getSessions, createSession, duplicateSession, deleteSession, restoreSession, renameSession, pinSession,
   exportSessions, importSessions,
   updateNotes, setSessionTags, getTags, upsertTag, removeTagGlobal,
 } from '../utils/storage.js';
@@ -749,12 +749,17 @@ async function handleCardAction(action, id) {
   if (action === 'delete') { deleteWithUndo(id); return; }
 }
 
-function deleteWithUndo(id) {
-  if (pendingDelete) { clearTimeout(deleteTimer); deleteSession(pendingDelete.id); }
-  pendingDelete = allSessions.find(s => s.id === id);
-  if (!pendingDelete) return;
+async function deleteWithUndo(id) {
+  clearTimeout(deleteTimer);
+  pendingDelete = null;
 
-  allSessions = allSessions.filter(s => s.id !== id);
+  const session = allSessions.find(s => s.id === id);
+  if (!session) return;
+
+  await deleteSession(id);                          // commit to storage immediately
+  pendingDelete = session;
+  allSessions   = allSessions.filter(s => s.id !== id);
+
   if (selectedId === id) {
     selectedId = null;
     $('detailEmpty').style.display = 'flex';
@@ -762,16 +767,17 @@ function deleteWithUndo(id) {
   }
   updateStats(); render();
 
-  showToast(`"${truncate(pendingDelete.name, 28)}" deleted`, async () => {
+  showToast(`"${truncate(session.name, 28)}" deleted`, async () => {
     clearTimeout(deleteTimer);
-    allSessions   = await getSessions();
-    pendingDelete = null;
-    updateStats(); renderTagSidebar(); render();
+    if (pendingDelete) {
+      await restoreSession(pendingDelete);
+      allSessions   = await getSessions();
+      pendingDelete = null;
+      updateStats(); renderTagSidebar(); render();
+    }
   });
 
-  deleteTimer = setTimeout(async () => {
-    if (pendingDelete) { await deleteSession(pendingDelete.id); pendingDelete = null; }
-  }, 5000);
+  deleteTimer = setTimeout(() => { pendingDelete = null; }, 5000);
 }
 
 // ── Toast ─────────────────────────────────────────────────────────────────────

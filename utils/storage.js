@@ -81,6 +81,12 @@ export async function deleteSession(id) {
   await chrome.storage.local.set({ [KEY]: sessions.filter(s => s.id !== id) });
 }
 
+export async function restoreSession(session) {
+  const sessions = await getSessions();
+  sessions.unshift(session);
+  await chrome.storage.local.set({ [KEY]: sessions });
+}
+
 export async function pinSession(id, pinned) {
   const sessions = await getSessions();
   const s = sessions.find(s => s.id === id);
