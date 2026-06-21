@@ -1,6 +1,79 @@
 import { createSession, getSessions, saveSnapshot } from '../utils/storage.js';
 import { isValidUrl } from '../utils/helpers.js';
 
+// ── Window-close tracking ─────────────────────────────────────────────────────
+// Uses chrome.storage.session (in-memory, survives SW restarts within a browser session)
+const WIN_CACHE_KEY   = 'tabvault_win_cache';
+const CLOSED_WINS_KEY = 'tabvault_closed_windows';
+
+async function updateWindowCache(windowId) {
+  try {
+    const tabs  = await chrome.tabs.query({ windowId });
+    const valid = tabs.filter(t => isValidUrl(t.url));
+    const r     = await chrome.storage.session.get(WIN_CACHE_KEY);
+    const cache = r[WIN_CACHE_KEY] || {};
+    if (valid.length >= 2) {
+      cache[String(windowId)] = valid.map(t => ({
+        url:        t.url,
+        title:      t.title || '',
+        favIconUrl: t.favIconUrl?.startsWith('http') ? t.favIconUrl : '',
+      }));
+    } else {
+      delete cache[String(windowId)];
+    }
+    await chrome.storage.session.set({ [WIN_CACHE_KEY]: cache });
+  } catch {}
+}
+
+// Seed the cache on every SW startup so we don't miss windows opened before this SW loaded
+(async () => {
+  try {
+    const r = await chrome.storage.session.get(WIN_CACHE_KEY);
+    if (r[WIN_CACHE_KEY]) return;                           // already seeded this session
+    const windows = await chrome.windows.getAll({ populate: true });
+    const cache   = {};
+    for (const w of windows.filter(w => w.type === 'normal')) {
+      const valid = (w.tabs || []).filter(t => isValidUrl(t.url));
+      if (valid.length >= 2) {
+        cache[String(w.id)] = valid.map(t => ({
+          url:        t.url,
+          title:      t.title || '',
+          favIconUrl: t.favIconUrl?.startsWith('http') ? t.favIconUrl : '',
+        }));
+      }
+    }
+    await chrome.storage.session.set({ [WIN_CACHE_KEY]: cache });
+  } catch {}
+})();
+
+chrome.tabs.onCreated.addListener(t => updateWindowCache(t.windowId));
+chrome.tabs.onUpdated.addListener((id, info, t) => {
+  if (info.url || info.title || info.status === 'complete') updateWindowCache(t.windowId);
+});
+chrome.tabs.onRemoved.addListener((id, { windowId, isWindowClosing }) => {
+  if (!isWindowClosing) updateWindowCache(windowId);   // skip: window already tearing down
+});
+chrome.tabs.onMoved.addListener((id, { windowId }) => updateWindowCache(windowId));
+chrome.tabs.onAttached.addListener((id, { newWindowId }) => updateWindowCache(newWindowId));
+chrome.tabs.onDetached.addListener((id, { oldWindowId }) => updateWindowCache(oldWindowId));
+
+chrome.windows.onRemoved.addListener(async (windowId) => {
+  try {
+    const r     = await chrome.storage.session.get(WIN_CACHE_KEY);
+    const cache = r[WIN_CACHE_KEY] || {};
+    const tabs  = cache[String(windowId)];
+    delete cache[String(windowId)];
+    chrome.storage.session.set({ [WIN_CACHE_KEY]: cache });   // fire & forget
+
+    if (!tabs || tabs.length < 2) return;                    // single tab or empty — skip
+
+    const lr     = await chrome.storage.local.get(CLOSED_WINS_KEY);
+    const closed = lr[CLOSED_WINS_KEY] || [];
+    closed.unshift({ id: Date.now(), tabs, closedAt: Date.now() });
+    await chrome.storage.local.set({ [CLOSED_WINS_KEY]: closed.slice(0, 5) });
+  } catch {}
+});
+
 // ── Install / update ──────────────────────────────────────────────────────────
 chrome.runtime.onInstalled.addListener(async () => {
   chrome.contextMenus.create({ id: 'save-tab',    title: 'Save tab to TabVault',      contexts: ['page'] });

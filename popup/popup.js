@@ -18,6 +18,7 @@ let deleteTimer        = null;
 let toastTimer         = null;
 let obStep             = 0;
 let recoverySnapshot   = null;
+let closedWindowData   = null;
 let searchTimer        = null;
 
 const $ = id => document.getElementById(id);
@@ -50,6 +51,7 @@ async function init() {
   if (!(await hasOnboarded())) { showOnboarding(); return; }
   await loadAll();
   await checkRecovery();
+  await checkClosedWindows();
   render();
   renderTagFilter();
   bindEvents();
@@ -117,6 +119,34 @@ async function restoreSnapshot() {
   $('recoveryBanner').classList.add('hidden');
   showToast(`Restored ${recoverySnapshot.windows.length} window${recoverySnapshot.windows.length !== 1 ? 's' : ''}`);
   recoverySnapshot = null;
+}
+
+// ── Closed window recovery ─────────────────────────────────────────────────────
+const CLOSED_WINS_KEY = 'tabvault_closed_windows';
+
+async function checkClosedWindows() {
+  const r    = await chrome.storage.local.get(CLOSED_WINS_KEY);
+  const list = r[CLOSED_WINS_KEY];
+  if (!list?.length) return;
+
+  closedWindowData  = list[0];
+  const remaining   = list.slice(1);
+  // Keep remaining ones for subsequent popup opens
+  if (remaining.length) await chrome.storage.local.set({ [CLOSED_WINS_KEY]: remaining });
+  else                  await chrome.storage.local.remove(CLOSED_WINS_KEY);
+
+  const count = closedWindowData.tabs.length;
+  $('closedWinSub').textContent = `${count} tab${count !== 1 ? 's' : ''}  ·  ${timeAgo(closedWindowData.closedAt)}`;
+  $('closedWinBanner').classList.remove('hidden');
+}
+
+async function restoreClosedWindow() {
+  if (!closedWindowData) return;
+  const urls = closedWindowData.tabs.map(t => t.url).filter(Boolean);
+  if (urls.length) await chrome.windows.create({ url: urls });
+  $('closedWinBanner').classList.add('hidden');
+  showToast(`Restored ${urls.length} tab${urls.length !== 1 ? 's' : ''}`);
+  closedWindowData = null;
 }
 
 // ── Render ────────────────────────────────────────────────────────────────────
@@ -301,11 +331,18 @@ async function restoreWithGroups(s) {
 function bindEvents() {
   bindRatingEvents();
 
-  // Recovery
+  // Crash recovery
   $('recoveryRestore').addEventListener('click', restoreSnapshot);
   $('recoveryClose').addEventListener('click', () => {
     $('recoveryBanner').classList.add('hidden');
     recoverySnapshot = null;
+  });
+
+  // Closed window recovery
+  $('closedWinRestore').addEventListener('click', restoreClosedWindow);
+  $('closedWinClose').addEventListener('click', () => {
+    $('closedWinBanner').classList.add('hidden');
+    closedWindowData = null;
   });
 
   // Navigation

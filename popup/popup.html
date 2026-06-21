@@ -89,6 +89,23 @@
       </div>
     </div>
 
+    <!-- ── Closed window recovery banner ── -->
+    <div class="recovery-banner hidden" id="closedWinBanner">
+      <div class="rb-left">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round">
+          <rect x="2" y="3" width="20" height="15" rx="2"/><path d="M2 7h20"/>
+        </svg>
+        <div class="rb-text">
+          <span class="rb-title">Window closed</span>
+          <span class="rb-sub" id="closedWinSub"></span>
+        </div>
+      </div>
+      <div class="rb-right">
+        <button class="rb-btn" id="closedWinRestore">Restore</button>
+        <button class="rb-x" id="closedWinClose">✕</button>
+      </div>
+    </div>
+
     <!-- ── Sessions header + tag filter ── -->
     <div class="sessions-header">
       <span class="sessions-label">Sessions</span>
