@@ -313,20 +313,18 @@ html, body {
 .rb-x { font-size: 14px; color: var(--text-3); padding: 2px 4px; }
 .rb-x:hover { color: var(--text-2); }
 
-/* ── Rate footer ─────────────────────────────────────────── */
-.rate-footer {
-  padding: 7px 12px;
-  text-align: center;
-  font-size: 12px;
-  color: var(--text-3);
-  border-top: 1px solid var(--border);
-  cursor: pointer;
-  flex-shrink: 0;
-  user-select: none;
-  transition: color 0.12s;
-  letter-spacing: 0.01em;
+/* ── Rate star button (in header) ────────────────────────── */
+.rate-star-btn {
+  font-size: 15px;
+  color: #d97706;
+  opacity: 0.7;
+  transition: opacity 0.15s, transform 0.15s;
 }
-.rate-footer:hover { color: var(--accent); }
+.rate-star-btn:hover {
+  opacity: 1;
+  transform: scale(1.2);
+  color: #f59e0b;
+}
 
 /* ── Sessions header ─────────────────────────────────────── */
 .sessions-header {
