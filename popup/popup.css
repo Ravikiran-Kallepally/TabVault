@@ -313,53 +313,20 @@ html, body {
 .rb-x { font-size: 14px; color: var(--text-3); padding: 2px 4px; }
 .rb-x:hover { color: var(--text-2); }
 
-/* ── Sessions header ─────────────────────────────────────────── */
-/* ── Rate Us banner ─────────────────────────────────────── */
-.rate-banner {
-  margin: 6px 12px 2px;
-  padding: 9px 12px;
-  background: linear-gradient(135deg, rgba(99,102,241,0.14), rgba(99,102,241,0.07));
-  border: 1px solid rgba(99,102,241,0.28);
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  flex-shrink: 0;
-}
-.rate-banner.hidden { display: none; }
-.rate-content {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  flex: 1;
-  min-width: 0;
-}
-.rate-stars { color: #f59e0b; font-size: 13px; flex-shrink: 0; letter-spacing: 1px; }
-.rate-text { display: flex; flex-direction: column; gap: 1px; }
-.rate-text strong { font-size: 12px; color: var(--text-1); font-weight: 600; }
-.rate-text span   { font-size: 11px; color: var(--text-2); }
-.rate-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
-.rate-btn {
-  padding: 4px 11px;
-  border-radius: 6px;
-  font-size: 11px;
-  font-weight: 600;
+/* ── Rate footer ─────────────────────────────────────────── */
+.rate-footer {
+  padding: 7px 12px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-3);
+  border-top: 1px solid var(--border);
   cursor: pointer;
-  font-family: inherit;
-  border: none;
-  transition: all 0.13s;
+  flex-shrink: 0;
+  user-select: none;
+  transition: color 0.12s;
+  letter-spacing: 0.01em;
 }
-.rate-yes  { background: var(--accent); color: #fff; }
-.rate-yes:hover { filter: brightness(1.12); }
-.rate-later { background: transparent; color: var(--text-2); padding: 4px 6px; }
-.rate-later:hover { color: var(--text-1); }
-.rate-x {
-  background: none; border: none; color: var(--text-3);
-  cursor: pointer; font-size: 13px; padding: 2px 4px;
-  opacity: 0.55; line-height: 1;
-}
-.rate-x:hover { opacity: 1; }
+.rate-footer:hover { color: var(--accent); }
 
 /* ── Sessions header ─────────────────────────────────────── */
 .sessions-header {

@@ -55,7 +55,6 @@ async function init() {
   render();
   renderTagFilter();
   bindEvents();
-  await checkRating();
 }
 
 async function loadAll() {
@@ -468,50 +467,13 @@ function bindEvents() {
   });
 }
 
-// ── Rate Us ───────────────────────────────────────────────────────────────────
-const RATE_KEY = 'tabvault_rating';
-
-async function checkRating() {
-  const r     = await chrome.storage.local.get(RATE_KEY);
-  const state = r[RATE_KEY] || {};
-
-  // Record first-open timestamp
-  if (!state.installedAt) {
-    await chrome.storage.local.set({ [RATE_KEY]: { ...state, installedAt: Date.now() } });
-    return;
-  }
-  if (state.done) return;
-  if (allSessions.length < 5) return;
-
-  const daysSinceInstall = (Date.now() - state.installedAt) / 86_400_000;
-  if (daysSinceInstall < 3) return;
-
-  if (state.snoozedAt) {
-    const daysSinceSnooze = (Date.now() - state.snoozedAt) / 86_400_000;
-    if (daysSinceSnooze < 7) return;
-  }
-
-  $('rateBanner').classList.remove('hidden');
-}
-
-async function dismissRating(permanent) {
-  const r     = await chrome.storage.local.get(RATE_KEY);
-  const state = r[RATE_KEY] || {};
-  if (permanent) state.done = true;
-  else           state.snoozedAt = Date.now();
-  await chrome.storage.local.set({ [RATE_KEY]: state });
-  $('rateBanner').classList.add('hidden');
-}
-
+// ── Rate footer ───────────────────────────────────────────────────────────────
 function bindRatingEvents() {
-  $('rateNow').addEventListener('click', async () => {
-    await dismissRating(true);
+  $('rateFooter').addEventListener('click', () => {
     chrome.tabs.create({
       url: `https://chromewebstore.google.com/detail/${chrome.runtime.id}/reviews`
     });
   });
-  $('rateLater').addEventListener('click', () => dismissRating(false));
-  $('rateNever').addEventListener('click', () => dismissRating(true));
 }
 
 // ── Name bar ──────────────────────────────────────────────────────────────────
