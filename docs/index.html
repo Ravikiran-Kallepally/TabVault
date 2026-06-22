@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy — TabVault</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+                   'Helvetica Neue', Arial, sans-serif;
+      background: #f8fafc;
+      color: #334155;
+      line-height: 1.75;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Header ── */
+    header {
+      background: #070712;
+      padding: 36px 24px 32px;
+      text-align: center;
+      border-bottom: 3px solid #6366f1;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 6px;
+    }
+
+    .brand svg { flex-shrink: 0; }
+
+    .brand-name {
+      font-size: 22px;
+      font-weight: 700;
+      color: #ffffff;
+      letter-spacing: -0.4px;
+    }
+
+    header .sub {
+      color: #94a3b8;
+      font-size: 14px;
+      margin-top: 4px;
+    }
+
+    /* ── Main content ── */
+    main {
+      max-width: 740px;
+      margin: 0 auto;
+      padding: 52px 24px 96px;
+    }
+
+    .page-label {
+      display: inline-block;
+      background: #eef2ff;
+      color: #4f46e5;
+      border: 1px solid #c7d2fe;
+      border-radius: 100px;
+      padding: 4px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      margin-bottom: 28px;
+    }
+
+    .page-title {
+      font-size: 32px;
+      font-weight: 800;
+      color: #0f172a;
+      letter-spacing: -0.6px;
+      margin-bottom: 8px;
+      line-height: 1.2;
+    }
+
+    .page-date {
+      font-size: 14px;
+      color: #94a3b8;
+      margin-bottom: 36px;
+    }
+
+    /* Summary callout */
+    .callout {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 14px;
+      padding: 20px 22px;
+      margin-bottom: 48px;
+    }
+
+    .callout-icon {
+      flex-shrink: 0;
+      width: 24px;
+      height: 24px;
+      background: #22c55e;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 1px;
+    }
+
+    .callout-icon svg { display: block; }
+
+    .callout p {
+      font-size: 15px;
+      font-weight: 500;
+      color: #166534;
+      margin: 0;
+    }
+
+    /* Sections */
+    section { margin-bottom: 44px; }
+
+    h2 {
+      font-size: 17px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #e2e8f0;
+      letter-spacing: -0.2px;
+    }
+
+    p {
+      font-size: 15px;
+      color: #475569;
+      margin-bottom: 14px;
+    }
+
+    p:last-child { margin-bottom: 0; }
+
+    ul {
+      padding-left: 0;
+      list-style: none;
+      margin-bottom: 14px;
+    }
+
+    ul li {
+      font-size: 15px;
+      color: #475569;
+      padding: 6px 0 6px 24px;
+      position: relative;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    ul li:last-child { border-bottom: none; }
+
+    ul li::before {
+      content: '';
+      position: absolute;
+      left: 6px;
+      top: 14px;
+      width: 6px;
+      height: 6px;
+      background: #6366f1;
+      border-radius: 50%;
+    }
+
+    strong { color: #1e293b; font-weight: 600; }
+
+    code {
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-size: 13px;
+      font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
+      color: #6366f1;
+    }
+
+    /* "Not collected" checklist */
+    .checklist {
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      overflow: hidden;
+      margin: 16px 0 20px;
+    }
+
+    .check-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 18px;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 14px;
+      color: #374151;
+    }
+
+    .check-row:last-child { border-bottom: none; }
+
+    .check-row .tick {
+      flex-shrink: 0;
+      width: 18px;
+      height: 18px;
+      background: #dcfce7;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Permissions table */
+    .perm-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      margin: 16px 0;
+    }
+
+    .perm-table th {
+      text-align: left;
+      background: #f8fafc;
+      color: #64748b;
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 10px 14px;
+      border-bottom: 2px solid #e2e8f0;
+    }
+
+    .perm-table td {
+      padding: 11px 14px;
+      border-bottom: 1px solid #f1f5f9;
+      color: #475569;
+      vertical-align: top;
+    }
+
+    .perm-table tr:last-child td { border-bottom: none; }
+
+    .perm-table td:first-child {
+      font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
+      color: #6366f1;
+      font-size: 13px;
+      white-space: nowrap;
+      font-weight: 600;
+      width: 140px;
+    }
+
+    /* Contact */
+    .contact-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 20px 22px;
+      margin-top: 12px;
+    }
+
+    .contact-card p { margin: 0; font-size: 15px; }
+
+    .contact-card a {
+      color: #6366f1;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .contact-card a:hover { text-decoration: underline; }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 28px 24px;
+      border-top: 1px solid #e2e8f0;
+      font-size: 13px;
+      color: #94a3b8;
+    }
+
+    footer a { color: #6366f1; text-decoration: none; }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .page-title { font-size: 26px; }
+      .perm-table td:first-child { width: auto; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <svg width="34" height="34" viewBox="0 0 34 34" fill="none">
+      <rect width="34" height="34" rx="8" fill="#6366f1"/>
+      <rect x="7"  y="16" width="20" height="11" rx="2.5" fill="white" opacity="0.18"/>
+      <rect x="7"  y="12" width="20" height="11" rx="2.5" fill="white" opacity="0.44"/>
+      <rect x="7"  y="8"  width="20" height="11" rx="2.5" fill="white"/>
+      <rect x="7"  y="5"  width="8"  height="5"  rx="1.5" fill="white"/>
+    </svg>
+    <span class="brand-name">TabVault</span>
+  </div>
+  <p class="sub">Session Manager for Chrome</p>
+</header>
+
+<main>
+  <span class="page-label">Privacy Policy</span>
+  <h1 class="page-title">We collect nothing.<br>Everything stays on your device.</h1>
+  <p class="page-date">Last updated: June 21, 2026</p>
+
+  <div class="callout">
+    <div class="callout-icon">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+        <path d="M2 6l3 3 5-5" stroke="white" stroke-width="1.8"
+              stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <p>TabVault stores your sessions entirely inside Chrome's local storage on your own device. No data is ever transmitted to any server. The developer has zero access to your sessions, tabs, or browsing activity.</p>
+  </div>
+
+  <!-- 1 -->
+  <section>
+    <h2>1. Overview</h2>
+    <p>TabVault is a Chrome extension that saves, searches and restores browser sessions locally. This Privacy Policy explains what the extension accesses, how that information is used, and confirms that no personal data is ever collected or transmitted off your device.</p>
+    <p>By installing TabVault you agree to this policy.</p>
+  </section>
+
+  <!-- 2 -->
+  <section>
+    <h2>2. Data We Do Not Collect</h2>
+    <p>TabVault does not collect, transmit, store on any server, or share any of the following:</p>
+    <div class="checklist">
+      <div class="check-row"><span class="tick"><svg width="9" height="9" viewBox="0 0 9 9" fill="none"><path d="M1.5 4.5l2 2 4-4" stroke="#16a34a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Personally identifiable information (name, email, address, phone)</div>
+      <div class="check-row"><span class="tick"><svg width="9" height="9" viewBox="0 0 9 9" fill="none"><path d="M1.5 4.5l2 2 4-4" stroke="#16a34a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Browsing history sent to any external server</div>
+      <div class="check-row"><span class="tick"><svg width="9" height="9" viewBox="0 0 9 9" fill="none"><path d="M1.5 4.5l2 2 4-4" stroke="#16a34a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Authentication or login credentials</div>
+      <div class="check-row"><span class="tick"><svg width="9" height="9" viewBox="0 0 9 9" fill="none"><path d="M1.5 4.5l2 2 4-4" stroke="#16a34a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Financial or payment information</div>
+      <div class="check-row"><span class="tick"><svg width="9" height="9" viewBox="0 0 9 9" fill="none"><path d="M1.5 4.5l2 2 4-4" stroke="#16a34a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Health information of any kind</div>
+      <div class="check-row"><span class="tick"><svg width="9" height="9" viewBox="0 0 9 9" fill="none"><path d="M1.5 4.5l2 2 4-4" stroke="#16a34a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Location data</div>
+      <div class="check-row"><span class="tick"><svg width="9" height="9" viewBox="0 0 9 9" fill="none"><path d="M1.5 4.5l2 2 4-4" stroke="#16a34a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Usage analytics, telemetry or crash reports</div>
+      <div class="check-row"><span class="tick"><svg width="9" height="9" viewBox="0 0 9 9" fill="none"><path d="M1.5 4.5l2 2 4-4" stroke="#16a34a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Personal communications or page content</div>
+    </div>
+  </section>
+
+  <!-- 3 -->
+  <section>
+    <h2>3. Data Stored Locally on Your Device</h2>
+    <p>To provide its core features, TabVault writes the following data <strong>locally on your device</strong> using Chrome's built-in storage APIs. This data is never transmitted anywhere.</p>
+    <ul>
+      <li><strong>Session data</strong> — the URLs and titles of tabs you choose to save, stored in <code>chrome.storage.local</code></li>
+      <li><strong>Tags and preferences</strong> — custom tag names, colours, theme choice (dark/light), and onboarding state, stored in <code>chrome.storage.local</code></li>
+      <li><strong>Auto-save snapshots</strong> — a periodic snapshot of open tabs used for crash recovery, stored in <code>chrome.storage.local</code></li>
+      <li><strong>Window-close cache</strong> — a short-lived record of recently closed windows for one-click recovery, stored in <code>chrome.storage.session</code> and cleared automatically when the browser closes</li>
+    </ul>
+    <p>The developer has no mechanism to access, read or retrieve any of this data. It exists solely on your machine.</p>
+  </section>
+
+  <!-- 4 -->
+  <section>
+    <h2>4. Permissions Explained</h2>
+    <p>TabVault requests only the permissions strictly necessary for its features.</p>
+    <table class="perm-table">
+      <thead>
+        <tr><th>Permission</th><th>Why it is needed</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>tabs</td><td>Read tab URLs and titles when you save a session. No data leaves the device.</td></tr>
+        <tr><td>storage</td><td>Save sessions, tags and preferences locally using Chrome's built-in storage.</td></tr>
+        <tr><td>windows</td><td>Detect window close events to offer the one-click recovery banner.</td></tr>
+        <tr><td>alarms</td><td>Schedule the 30-minute background auto-save. No network requests are made.</td></tr>
+        <tr><td>contextMenus</td><td>Add a "Save session" option to your right-click context menu.</td></tr>
+        <tr><td>tabGroups</td><td>Read Chrome tab group names when saving so they can be restored later.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 5 -->
+  <section>
+    <h2>5. Third-Party Services</h2>
+    <p>TabVault uses no third-party analytics, advertising networks, cloud storage providers, crash-reporting services or any other external service. Zero data is shared with any third party under any circumstances.</p>
+  </section>
+
+  <!-- 6 -->
+  <section>
+    <h2>6. Children's Privacy</h2>
+    <p>TabVault does not knowingly collect any information from children under the age of 13. The extension requires no account, no sign-up, and transmits no data — making it safe for users of all ages.</p>
+  </section>
+
+  <!-- 7 -->
+  <section>
+    <h2>7. Changes to This Policy</h2>
+    <p>If this Privacy Policy changes, the updated version will be published at this URL with a revised "Last updated" date. Continued use of the extension after a policy update constitutes acceptance of the revised terms.</p>
+  </section>
+
+  <!-- 8 -->
+  <section>
+    <h2>8. Contact</h2>
+    <p>For questions or concerns about this Privacy Policy, reach out at:</p>
+    <div class="contact-card">
+      <p>✉️ &nbsp;<a href="mailto:ravikirankallepally@gmail.com">ravikirankallepally@gmail.com</a></p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <p>© 2026 TabVault · <a href="mailto:ravikirankallepally@gmail.com">ravikirankallepally@gmail.com</a></p>
+</footer>
+
+</body>
+</html>
