@@ -2,7 +2,7 @@
 
 A Chrome extension that saves, searches and restores browser sessions. Local-first, no account required, nothing leaves your browser.
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue) ![MV3](https://img.shields.io/badge/Manifest-V3-green) ![License](https://img.shields.io/badge/license-MIT-lightgrey)
+![Version](https://img.shields.io/badge/version-1.0.0-blue) ![MV3](https://img.shields.io/badge/Manifest-V3-green) ![License](https://img.shields.io/badge/license-MIT-lightgrey) ![Chrome Web Store](https://img.shields.io/badge/Chrome%20Web%20Store-Live-brightgreen)
 
 ---
 
@@ -41,6 +41,7 @@ A Chrome extension that saves, searches and restores browser sessions. Local-fir
 ### Reliability
 - **Auto-save snapshots** — every 30 minutes, TabVault silently snapshots all open windows
 - **Crash recovery** — on next launch, a recovery banner lets you restore tabs lost to a crash or restart
+- **Window-close recovery** — closing a Chrome window by accident shows a one-click restore banner immediately, before the session is gone
 - **Live auto-refresh** — popup and dashboard stay in sync with each other in real time via `chrome.storage.onChanged`
 
 ### UX
@@ -48,6 +49,7 @@ A Chrome extension that saves, searches and restores browser sessions. Local-fir
 - **Google Material design** — clean light palette (`#F8F9FA` bg, `#1A73E8` accent) with full dark override
 - **Onboarding** — 3-slide walkthrough on first launch
 - **Chrome Tab Groups** — saves and restores native tab group names and colours
+- **Rate shortcut** — amber ★ in the header opens the Chrome Web Store review page directly
 
 ---
 
@@ -57,6 +59,7 @@ A Chrome extension that saves, searches and restores browser sessions. Local-fir
 |---|---|---|
 | Full-text search | ✅ | ❌ |
 | Auto-save / crash recovery | ✅ | ❌ |
+| Window-close recovery | ✅ | ❌ |
 | Chrome Tab Groups | ✅ | ❌ |
 | Tags & filters | ✅ | ❌ |
 | Dark mode | ✅ | ❌ |
@@ -74,11 +77,13 @@ A Chrome extension that saves, searches and restores browser sessions. Local-fir
 
 - Plain JavaScript — no framework, no build step
 - Chrome Extension Manifest V3
-- `chrome.storage.local` — all data stays on your device
+- `chrome.storage.local` — all persistent data stays on device
+- `chrome.storage.session` — ephemeral window cache for close-recovery (cleared on browser exit)
 - ES Modules throughout
 - `chrome.tabGroups` for native group save/restore
 - `chrome.alarms` for 30-minute auto-save
 - `chrome.contextMenus` + `chrome.commands` for save shortcuts
+- `chrome.windows.onRemoved` for window-close recovery
 
 ---
 
@@ -88,7 +93,7 @@ A Chrome extension that saves, searches and restores browser sessions. Local-fir
 TabVault/
 ├── manifest.json
 ├── background/
-│   └── service-worker.js       # shortcuts, context menu, auto-save alarm
+│   └── service-worker.js       # shortcuts, context menu, auto-save, window-close recovery
 ├── popup/
 │   ├── popup.html
 │   ├── popup.css
@@ -100,10 +105,12 @@ TabVault/
 ├── utils/
 │   ├── storage.js              # CRUD for sessions, tags, snapshots
 │   └── helpers.js              # timeAgo, favicons, colors, escaping
-└── icons/
-    ├── icon16.png
-    ├── icon48.png
-    └── icon128.png
+├── icons/
+│   ├── icon16.png
+│   ├── icon48.png
+│   └── icon128.png
+└── docs/
+    └── index.html              # Privacy policy (served via GitHub Pages)
 ```
 
 ---
@@ -131,12 +138,36 @@ Change the save shortcut at `chrome://extensions/shortcuts`.
 
 ---
 
+## Privacy
+
+TabVault collects no user data. All sessions are stored locally using `chrome.storage.local`. Nothing is transmitted to any server.
+
+Full privacy policy: [ravikiran-kallepally.github.io/TabVault](https://ravikiran-kallepally.github.io/TabVault/)
+
+---
+
 ## Roadmap
 
-- [ ] Chrome Web Store listing (v1.0 — in review)
-- [ ] Cross-device sync (E2E encrypted, no server)
-- [ ] Team session sharing (Pro tier)
+### v1.0 — Shipped ✅
+- Chrome Web Store listing (live)
+- Window-close recovery
+- Crash recovery + 30-min auto-save
+- Tags, filters, pins, search, share codes
+- Dark / light mode, onboarding
+
+### v1.1 — Auto Tab Management
+- [ ] **Duplicate tab killer** — silently close duplicate tabs across all windows
+- [ ] **Tab sleeping** — suspend tabs idle for >30 min to free RAM, wake on click
+- [ ] **Smart session suggestions** — detect clusters of related tabs and prompt to save
+
+### v1.2 — Intelligence
 - [ ] AI session naming via Chrome's built-in Gemini Nano (no API key needed)
+- [ ] Auto-group tabs by domain / topic
+- [ ] Tab expiry — warn when a saved session hasn't been opened in 30 days
+
+### Future
+- [ ] Cross-device sync (E2E encrypted, no server)
+- [ ] Team session sharing
 
 ---
 
