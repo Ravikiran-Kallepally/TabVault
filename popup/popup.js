@@ -329,6 +329,7 @@ async function restoreWithGroups(s) {
 // ── Events ────────────────────────────────────────────────────────────────────
 function bindEvents() {
   bindRatingEvents();
+  initShareModal();
 
   // Crash recovery
   $('recoveryRestore').addEventListener('click', restoreSnapshot);
@@ -473,6 +474,43 @@ function bindRatingEvents() {
     chrome.tabs.create({
       url: `https://chromewebstore.google.com/detail/${chrome.runtime.id}/reviews`
     });
+  });
+}
+
+// ── Share modal ───────────────────────────────────────────────────────────────
+function initShareModal() {
+  const storeUrl = `https://chromewebstore.google.com/detail/${chrome.runtime.id}`;
+  const text     = encodeURIComponent('TabVault – save, search and restore browser sessions in one click');
+  const url      = encodeURIComponent(storeUrl);
+
+  $('shareUrl').textContent = storeUrl;
+
+  $('shareBtn').addEventListener('click', () => $('shareBackdrop').classList.remove('hidden'));
+  $('shareClose').addEventListener('click', () => $('shareBackdrop').classList.add('hidden'));
+  $('shareBackdrop').addEventListener('click', e => {
+    if (e.target === $('shareBackdrop')) $('shareBackdrop').classList.add('hidden');
+  });
+
+  $('shareLinkedIn').addEventListener('click', () =>
+    chrome.tabs.create({ url: `https://www.linkedin.com/sharing/share-offsite/?url=${url}` }));
+
+  $('shareFacebook').addEventListener('click', () =>
+    chrome.tabs.create({ url: `https://www.facebook.com/sharer/sharer.php?u=${url}` }));
+
+  $('shareReddit').addEventListener('click', () =>
+    chrome.tabs.create({ url: `https://reddit.com/submit?url=${url}&title=${text}` }));
+
+  $('shareX').addEventListener('click', () =>
+    chrome.tabs.create({ url: `https://twitter.com/intent/tweet?url=${url}&text=${text}` }));
+
+  $('shareWhatsApp').addEventListener('click', () =>
+    chrome.tabs.create({ url: `https://wa.me/?text=${text}%20${url}` }));
+
+  $('shareCopy').addEventListener('click', async () => {
+    await navigator.clipboard.writeText(storeUrl);
+    const btn = $('shareCopy');
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = 'Copy'; }, 1800);
   });
 }
 

@@ -825,6 +825,128 @@ html, body {
 .toast-undo:hover { background: rgba(255,255,255,0.08); }
 .toast-undo.hidden { display: none; }
 
+/* ── Share modal ─────────────────────────────────────────────── */
+.share-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 300;
+  animation: fadeIn 0.15s ease;
+}
+.share-backdrop.hidden { display: none; }
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.share-card {
+  background: var(--surface);
+  border-radius: 16px;
+  padding: 20px;
+  width: 300px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.22);
+  animation: popIn 0.18s cubic-bezier(0.34,1.56,0.64,1);
+}
+
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.92); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.share-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.share-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.share-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.share-close {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  border: none;
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-size: 11px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.share-close:hover { background: var(--surface-3); }
+
+.share-sub {
+  font-size: 12px;
+  color: var(--text-2);
+  margin-bottom: 16px;
+}
+
+.share-icons {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.share-icon-btn {
+  width: 42px; height: 42px;
+  border-radius: 50%;
+  border: none;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: transform 0.12s, opacity 0.12s;
+  flex-shrink: 0;
+}
+.share-icon-btn:hover  { transform: scale(1.12); }
+.share-icon-btn:active { opacity: 0.8; transform: scale(0.96); }
+
+.share-url-row {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--border-2);
+  border-radius: 8px;
+  padding: 8px 10px;
+  gap: 8px;
+  background: var(--bg);
+}
+
+.share-url-text {
+  flex: 1;
+  font-size: 11.5px;
+  color: var(--text-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.share-copy-btn {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--accent);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0 2px;
+  white-space: nowrap;
+  transition: opacity 0.1s;
+  font-family: inherit;
+}
+.share-copy-btn:hover { opacity: 0.75; }
+
 /* ── Theme toggle icons ──────────────────────────────────────── */
 .theme-icon-moon { display: block; }
 .theme-icon-sun  { display: none;  }
