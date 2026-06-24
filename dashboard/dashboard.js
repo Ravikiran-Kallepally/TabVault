@@ -342,7 +342,7 @@ function tabItemHTML(t) {
       <div class="tab-url">${escapeHtml(getDomain(t.url))}</div>
     </div>
     <button class="tab-rm-btn" data-url="${escapeHtml(t.url)}" title="Remove from session">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" pointer-events="none">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" pointer-events="none">
         <polyline points="3 6 5 6 21 6"/><path d="m19 6-.867 12.142A2 2 0 0 1 16.138 20H7.862a2 2 0 0 1-1.995-1.858L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/>
       </svg>
     </button>
