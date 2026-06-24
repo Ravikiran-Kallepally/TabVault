@@ -472,14 +472,14 @@ function bindEvents() {
 function bindRatingEvents() {
   $('rateFooter').addEventListener('click', () => {
     chrome.tabs.create({
-      url: `https://chromewebstore.google.com/detail/${chrome.runtime.id}/reviews`
+      url: 'https://chromewebstore.google.com/detail/tabvault-%E2%80%93-session-manage/oagkabfgmcpplglbgdaeaofmohdbglak/reviews'
     });
   });
 }
 
 // ── Share modal ───────────────────────────────────────────────────────────────
 function initShareModal() {
-  const storeUrl = `https://chromewebstore.google.com/detail/${chrome.runtime.id}`;
+  const storeUrl = 'https://chromewebstore.google.com/detail/tabvault-%E2%80%93-session-manage/oagkabfgmcpplglbgdaeaofmohdbglak';
   const text     = encodeURIComponent('TabVault – save, search and restore browser sessions in one click');
   const url      = encodeURIComponent(storeUrl);
 
@@ -569,8 +569,16 @@ async function handleMenuAction(action, id) {
   if (action === 'restore-new') { await restoreWithGroups(s); return; }
 
   if (action === 'restore-here') {
-    const win = await chrome.windows.getCurrent();
-    for (const t of s.tabs) await chrome.tabs.create({ url: t.url, windowId: win.id });
+    const win     = await chrome.windows.getCurrent();
+    const created = await Promise.all(
+      s.tabs.map(t => chrome.tabs.create({ url: t.url, windowId: win.id }))
+    );
+    try {
+      const COLORS = ['blue','red','yellow','green','pink','purple','cyan','orange'];
+      const color  = COLORS[Math.abs(s.name.charCodeAt(0)) % COLORS.length];
+      const groupId = await chrome.tabs.group({ tabIds: created.map(t => t.id) });
+      await chrome.tabGroups.update(groupId, { title: s.name.slice(0, 30), color });
+    } catch {}
     return;
   }
 

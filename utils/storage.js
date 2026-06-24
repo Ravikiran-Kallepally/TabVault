@@ -99,6 +99,15 @@ export async function pinSession(id, pinned) {
   await chrome.storage.local.set({ [KEY]: sessions });
 }
 
+export async function removeTabFromSession(id, tabUrl) {
+  const sessions = await getSessions();
+  const s = sessions.find(s => s.id === id);
+  if (!s) return;
+  s.tabs      = s.tabs.filter(t => t.url !== tabUrl);
+  s.updatedAt = Date.now();
+  await chrome.storage.local.set({ [KEY]: sessions });
+}
+
 export async function updateNotes(id, notes) {
   const sessions = await getSessions();
   const s = sessions.find(s => s.id === id);

@@ -2,6 +2,7 @@ import {
   getSessions, createSession, duplicateSession, deleteSession, restoreSession, renameSession, pinSession,
   exportSessions, importSessions,
   updateNotes, setSessionTags, getTags, upsertTag, removeTagGlobal,
+  removeTabFromSession,
 } from '../utils/storage.js';
 import { timeAgo, getDomain, getFavLetter, domainColor, truncate, isValidUrl, escapeHtml } from '../utils/helpers.js';
 
@@ -270,6 +271,16 @@ function showDetail(id) {
   $('tabsList').querySelectorAll('.tab-item').forEach(el => {
     el.addEventListener('click', () => chrome.tabs.create({ url: el.dataset.url }));
   });
+  $('tabsList').querySelectorAll('.tab-rm-btn').forEach(btn => {
+    btn.addEventListener('click', async e => {
+      e.stopPropagation();
+      await removeTabFromSession(selectedId, btn.dataset.url);
+      allSessions = await getSessions();
+      updateStats(); render();
+      const updated = allSessions.find(s => s.id === selectedId);
+      if (updated) showDetail(selectedId);
+    });
+  });
 }
 
 function renderDetailTags(s) {
@@ -330,6 +341,7 @@ function tabItemHTML(t) {
       <div class="tab-title" title="${escapeHtml(t.title)}">${escapeHtml(truncate(t.title, 38))}</div>
       <div class="tab-url">${escapeHtml(getDomain(t.url))}</div>
     </div>
+    <button class="tab-rm-btn" data-url="${escapeHtml(t.url)}" title="Remove from session">×</button>
   </div>`;
 }
 
