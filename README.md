@@ -2,7 +2,7 @@
 
 A Chrome extension that saves, searches and restores browser sessions. Local-first, no account required, nothing leaves your browser.
 
-![Version](https://img.shields.io/badge/version-1.1.0-blue) ![MV3](https://img.shields.io/badge/Manifest-V3-green) ![License](https://img.shields.io/badge/license-MIT-lightgrey) ![Chrome Web Store](https://img.shields.io/badge/Chrome%20Web%20Store-Live-brightgreen)
+![Version](https://img.shields.io/badge/version-1.2.0-blue) ![MV3](https://img.shields.io/badge/Manifest-V3-green) ![License](https://img.shields.io/badge/license-MIT-lightgrey) ![Chrome Web Store](https://img.shields.io/badge/Chrome%20Web%20Store-Live-brightgreen)
 
 ---
 
@@ -144,10 +144,12 @@ Change the save shortcut at `chrome://extensions/shortcuts`.
 
 ## Changelog
 
-### v1.1.0 — 2026-06-24
-- **Share modal** — share button in the popup header opens a dialog with LinkedIn, Facebook, Reddit, X and WhatsApp icons plus a one-click copy link to the Chrome Web Store listing
+### v1.2.0 — 2026-06-24
 - **Tab Groups on restore** — "Add to this window" now automatically creates a Chrome Tab Group named after the session, so restored tabs land visually grouped with the coloured border
 - **Delete individual tabs** — hover any tab row in the dashboard detail panel to reveal a Material-style trash icon; removes just that tab from the saved session instantly
+
+### v1.1.0 — 2026-06-24
+- **Share modal** — share button in the popup header opens a dialog with LinkedIn, Facebook, Reddit, X and WhatsApp icons plus a one-click copy link to the Chrome Web Store listing
 
 ### v1.0.0 — 2026-06-23 (initial launch)
 - Save, search and restore browser sessions

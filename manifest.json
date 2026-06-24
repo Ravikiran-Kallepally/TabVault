@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "TabVault – Session Manager",
   "short_name": "TabVault",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Save, search and restore browser sessions instantly. Local-first, no account needed.",
   "permissions": ["tabs", "storage", "windows", "alarms", "contextMenus", "tabGroups"],
   "icons": {
